@@ -7,11 +7,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    /* Same CSS as before */
     body {
       font-family: 'Inter', sans-serif;
       min-height: 100vh;
@@ -28,19 +28,345 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       transition: background 0.3s, color 0.3s;
     }
-    /* ... (rest of the CSS remains unchanged) */
+    .responsive-table {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      table-layout: auto;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    th, td {
+      white-space: nowrap;
+      text-align: center;
+      vertical-align: middle;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #e5e7eb;
+      background: inherit;
+    }
+    th {
+      background: #2563eb;
+      color: #fff !important;
+      font-weight: 800;
+      font-size: 1.05rem;
+      border-bottom: 2px solid #1d4ed8;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      min-width: 60px;
+      height: 48px;
+    }
+    th .resize-handle {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 8px;
+      height: 100%;
+      cursor: col-resize;
+      z-index: 10;
+      background: transparent;
+    }
+    th.sorted-asc:after {
+      content: " ▲";
+      font-size: 0.9em;
+    }
+    th.sorted-desc:after {
+      content: " ▼";
+      font-size: 0.9em;
+    }
+    .trip-date-col {
+      min-width: 180px;
+      max-width: 260px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.5px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25em 0.8em;
+      border-radius: 0.5em;
+      font-weight: 700;
+      font-size: 0.98em;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .status-paid {
+      background: #22c55e;
+    }
+    .status-notpaid {
+      background: #ef4444;
+    }
+    .status-partial {
+      background: #f59e42;
+    }
+    .sum-row {
+      background: #e0e7ff;
+      font-weight: bold;
+      color: #1e40af;
+    }
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      margin: 0 0.25rem;
+      border-radius: 0.25rem;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .edit-btn {
+      background: #3b82f6;
+    }
+    .edit-btn:hover {
+      background: #2563eb;
+    }
+    .delete-btn {
+      background: #ef4444;
+    }
+    .delete-btn:hover {
+      background: #dc2626;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-content.dark {
+      background: #23232a;
+      color: #f3f4f6;
+    }
+    .modal-content input,
+    .modal-content select,
+    .modal-content textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      background: #fff;
+      color: #000;
+    }
+    .modal-content.dark input,
+    .modal-content.dark select,
+    .modal-content.dark textarea {
+      background: #18181b;
+      color: #f3f4f6;
+      border-color: #444;
+    }
+    .modal-content label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+    @media (max-width: 900px) {
+      .container {
+        padding: 1.2rem 0.2rem;
+      }
+      .responsive-table {
+        font-size: 0.95rem;
+      }
+      .trip-date-col {
+        min-width: 140px;
+        max-width: 220px;
+        font-size: 0.98rem;
+      }
+    }
+    @media (max-width: 640px) {
+      .container {
+        padding: 0.5rem 0.1rem;
+      }
+      .responsive-table {
+        font-size: 0.85rem;
+      }
+      th, td {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.5rem;
+      }
+      .trip-date-col {
+        min-width: 120px;
+        max-width: 180px;
+        font-size: 0.92rem;
+      }
+      .action-btn {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+      }
+    }
+    html.dark body {
+      background: #18181b;
+      color: #f3f4f6;
+    }
+    html.dark .container {
+      background: #23232a;
+      color: #f3f4f6;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    html.dark input, html.dark select {
+      background: #18181b;
+      color: #f3f4f6;
+      border-color: #444;
+    }
+    html.dark .btn {
+      color: #fff;
+    }
+    html.dark .bg-gray-50 {
+      background: #23232a !important;
+    }
+    html.dark .bg-white {
+      background: #23232a !important;
+    }
+    html.dark .bg-gray-800 {
+      background: #18181b !important;
+    }
+    html.dark .bg-blue-600 {
+      background: #2563eb !important;
+    }
+    html.dark .text-gray-900 {
+      color: #f3f4f6 !important;
+    }
+    html.dark .footer-text {
+      color: #d1d5db;
+    }
+    html.dark .border {
+      border-color: #444 !important;
+    }
+    .footer-text {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .admin-link {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .export-btn {
+      background: #2563eb;
+      color: #fff;
+      margin-right: 0.5rem;
+    }
+    .export-btn:hover {
+      background: #1d4ed8;
+    }
+    .search-bar {
+      max-width: 300px;
+    }
+    .filter-select {
+      min-width: 120px;
+    }
+    .sync-status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #2563eb;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .sync-status.visible {
+      opacity: 1;
+    }
+    .sync-status i {
+      margin-right: 8px;
+    }
+    .debug-log {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 12px;
+      z-index: 1000;
+      display: none;
+    }
+    .debug-log.visible {
+      display: block;
+    }
+    .error-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .error-message.visible {
+      display: block;
+    }
+    .error-message i {
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
+  <!-- Dark Mode Toggle Button -->
   <button id="themeToggle" class="fixed top-4 left-4 z-50 btn bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-3 py-2 rounded-md shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
     <i class="fas fa-moon"></i>
   </button>
+
+  <!-- Error Message Display -->
+  <div id="errorMessage" class="error-message">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="errorText">An error occurred. Please check the debug log for details.</span>
+    <button id="closeError" class="ml-3">×</button>
+  </div>
+
+  <!-- Sync Status Indicator -->
+  <div id="syncStatus" class="sync-status">
+    <i class="fas fa-sync-alt fa-spin"></i>
+    <span>Syncing with Google Sheets...</span>
+  </div>
+
+  <!-- Debug Log -->
+  <div id="debugLog" class="debug-log">
+    <div class="flex justify-between items-center mb-2">
+      <h4>Debug Log:</h4>
+      <button id="toggleDebug" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Hide</button>
+    </div>
+    <div id="debugContent"></div>
+  </div>
 
   <div class="container max-w-7xl mx-auto py-8">
     <a href="admin-panel.html" class="admin-link btn bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900">
       <i class="fas fa-cog mr-2"></i> Admin Panel
     </a>
     <h3 class="text-3xl font-bold text-gray-900 mb-8"><i class="fas fa-table mr-2"></i> Trip Summary</h3>
+
+    <!-- Filters -->
     <div class="flex flex-wrap gap-4 mb-6 items-center">
       <input type="text" id="searchInput" class="input-field search-bar" placeholder="Search trips..." />
       <select id="driverFilter" class="select-field filter-select">
@@ -60,8 +386,12 @@
       <button id="clearFilters" class="btn bg-gray-300 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-400">Clear</button>
       <button id="exportPDF" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
       <button id="exportExcel" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-excel mr-1"></i> Excel</button>
-      <button id="syncSheets" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-sync mr-1"></i> Sync with Sheets</button>
+      <button id="forceSync" class="btn bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700">
+        <i class="fas fa-sync-alt mr-1"></i> Force Sync
+      </button>
     </div>
+
+    <!-- Table -->
     <div class="responsive-table">
       <table id="tripTable" class="bg-white rounded-lg shadow border">
         <thead>
@@ -97,7 +427,9 @@
             <th>Actions<div class="resize-handle"></div></th>
           </tr>
         </thead>
-        <tbody id="tripTableBody"></tbody>
+        <tbody id="tripTableBody">
+          <!-- Data will be loaded here -->
+        </tbody>
         <tfoot>
           <tr id="sumRow" class="sum-row"></tr>
         </tfoot>
@@ -176,6 +508,7 @@
     </div>
   </div>
 
+  <!-- Footer -->
   <footer class="bg-gray-800 text-white py-6 mt-auto">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <p class="footer-text">© 2025 NST Travels. All rights reserved.</p>
@@ -183,9 +516,7 @@
   </footer>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, child, get, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCz2rGDr0iREns6Rg6r1z5EHE3qhLDnEzs",
       authDomain: "narayananselvitravels-26dcb.firebaseapp.com",
@@ -196,29 +527,169 @@
       appId: "1:395599682835:web:9d46e03ca14aa0738dcee6"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const dbRef = ref(db);
-
     // Google Sheets configuration
-    const SPREADSHEET_ID = '1L1M8IHhGdWFO-O4GqhemoEhMGTjYNmxWaKG5b6YSM_I';
-    const SHEET_NAME = 'Trips'; // Update if your sheet name is different
-    const FIREBASE_FUNCTION_URL = 'https://us-central1-narayananselvitravels-26dcb.cloudfunctions.net/syncToGoogleSheets'; // Update with your Firebase Function URL
+    const googleSheetsConfig = {
+      apiKey: "AIzaSyAkZYcCPjbALkPD7S4B88yOyv6jIL_mOEs",
+      clientId: "395599682835-9d46e03ca14aa0738dcee6.apps.googleusercontent.com",
+      clientEmail: "nst-travels-service-account@nst-travels-sheet-access.iam.gserviceaccount.com",
+      sheetId: "1pbmMyiJko75JbKxisbTB4K8it1GQ__ujh0EEwJwb1-k",
+      sheetName: "Sheet1",
+      range: "A1:Z1000"
+    };
 
+    // Global variables
     let allTrips = [];
     let sortCol = null;
     let sortDir = 1;
+    let gapiInitialized = false;
+    let firebaseInitialized = false;
+    let dbRef;
 
-    const sheetHeaders = [
-      "Trip ID", "Trip Dates", "Duty", "Reference", "Pickup", "Drop", "Customer Name", "Customer Number",
-      "Driver Name", "Driver Number", "Vehicle Model", "Vehicle Number", "Start Time", "End Time", "Duration",
-      "Extra Hours", "Start KM", "End KM", "Total KM", "Extra KM", "Parking", "Toll", "Total Amount",
-      "Paid Amount", "Balance Amount", "Payment Status", "Notes", "Files", "Firebase ID"
-    ];
+    // Initialize Firebase
+    async function initFirebase() {
+      try {
+        logDebug("Initializing Firebase...");
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        dbRef = ref(db);
+        firebaseInitialized = true;
+        logDebug("Firebase initialized successfully");
+        return { app, db };
+      } catch (error) {
+        logDebug(`Firebase initialization error: ${error}`, true);
+        showError(`Firebase initialization failed: ${error.message}`);
+        throw error;
+      }
+    }
+
+    // Initialize Google API with proper authentication
+    async function initGoogleAPI() {
+      return new Promise(async (resolve, reject) => {
+        try {
+          logDebug("Loading Google API client...");
+
+          // Load the client library
+          await new Promise((resolve) => {
+            gapi.load('client:auth2', resolve);
+          });
+
+          logDebug("Google API client loaded");
+
+          // Initialize the client with API key and client ID
+          try {
+            await gapi.client.init({
+              apiKey: googleSheetsConfig.apiKey,
+              clientId: googleSheetsConfig.clientId,
+              discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+              scope: 'https://www.googleapis.com/auth/spreadsheets'
+            });
+
+            logDebug("Google API client initialized");
+
+            // Check if we're signed in
+            const authInstance = gapi.auth2.getAuthInstance();
+            if (!authInstance.isSignedIn.get()) {
+              logDebug("User not signed in, attempting to sign in...");
+              try {
+                await authInstance.signIn();
+                logDebug("Successfully signed in");
+              } catch (signInError) {
+                logDebug(`Sign in error: ${signInError}`, true);
+                showError(`Google sign-in failed: ${signInError.message}`);
+                reject(signInError);
+                return;
+              }
+            } else {
+              logDebug("Already signed in");
+            }
+
+            gapiInitialized = true;
+            resolve();
+          } catch (initError) {
+            logDebug(`Google API initialization error: ${initError}`, true);
+            showError(`Google API initialization failed: ${initError.message}`);
+            reject(initError);
+          }
+        } catch (error) {
+          logDebug(`Error loading Google API: ${error}`, true);
+          showError(`Google API load failed: ${error.message}`);
+          reject(error);
+        }
+      });
+    }
+
+    // Debug logging function
+    function logDebug(message, isError = false) {
+      const debugContent = document.getElementById('debugContent');
+      const timestamp = new Date().toLocaleTimeString();
+      const messageElement = document.createElement('div');
+      messageElement.className = isError ? 'text-red-400' : 'text-green-400';
+      messageElement.innerHTML = `<span class="font-bold">${timestamp}</span> ${message}`;
+      debugContent.appendChild(messageElement);
+      debugContent.scrollTop = debugContent.scrollHeight;
+    }
+
+    // Show error message
+    function showError(message) {
+      const errorElement = document.getElementById('errorMessage');
+      const errorText = document.getElementById('errorText');
+      errorText.textContent = message;
+      errorElement.classList.add('visible');
+    }
+
+    // Hide error message
+    function hideError() {
+      document.getElementById('errorMessage').classList.remove('visible');
+    }
+
+    // Close error button
+    document.getElementById('closeError').addEventListener('click', hideError);
+
+    // Show sync status message
+    function showSyncStatus(message, isError = false, isSuccess = false) {
+      const syncStatus = document.getElementById('syncStatus');
+      const icon = syncStatus.querySelector('i');
+      const span = syncStatus.querySelector('span');
+
+      span.textContent = message;
+
+      if (isError) {
+        syncStatus.style.background = '#ef4444';
+        icon.className = 'fas fa-exclamation-triangle';
+      } else if (isSuccess) {
+        syncStatus.style.background = '#22c55e';
+        icon.className = 'fas fa-check-circle';
+      } else {
+        syncStatus.style.background = '#2563eb';
+        icon.className = 'fas fa-sync-alt fa-spin';
+      }
+
+      syncStatus.classList.add('visible');
+
+      if (isSuccess || isError) {
+        setTimeout(() => {
+          syncStatus.classList.remove('visible');
+        }, 3000);
+      }
+    }
+
+    // Toggle debug log visibility
+    document.getElementById('toggleDebug').addEventListener('click', function() {
+      const debugLog = document.getElementById('debugLog');
+      const button = this;
+      if (debugLog.classList.contains('visible')) {
+        debugLog.classList.remove('visible');
+        button.textContent = 'Show';
+      } else {
+        debugLog.classList.add('visible');
+        button.textContent = 'Hide';
+      }
+    });
 
     // Dark Mode Toggle
     const themeToggle = document.getElementById('themeToggle');
     const htmlEl = document.documentElement;
+
     function updateThemeIcon() {
       if (htmlEl.classList.contains('dark')) {
         themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
@@ -226,11 +697,16 @@
         themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
       }
     }
+
     if (localStorage.getItem('theme') === 'dark' ||
         (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       htmlEl.classList.add('dark');
+    } else {
+      htmlEl.classList.remove('dark');
     }
+
     updateThemeIcon();
+
     themeToggle.addEventListener('click', () => {
       htmlEl.classList.toggle('dark');
       localStorage.setItem('theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
@@ -238,6 +714,7 @@
       updateModalTheme();
     });
 
+    // Update modal theme
     function updateModalTheme() {
       const modalContent = document.querySelector('.modal-content');
       if (modalContent) {
@@ -249,6 +726,7 @@
       }
     }
 
+    // Helper functions
     function formatDateForInput(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr);
@@ -286,6 +764,7 @@
       return `${h.padStart(2, '0')}:${m || '00'}`;
     }
 
+    // Group trips by bookingId for package trips
     function groupTrips(trips) {
       const grouped = {};
       trips.forEach(trip => {
@@ -317,8 +796,230 @@
       });
     }
 
+    // Load data from Google Sheets with proper error handling
+    async function loadSheetData() {
+      if (!gapiInitialized) {
+        logDebug("Google API not initialized, cannot load sheet data", true);
+        showError("Google API not initialized");
+        return [];
+      }
+
+      try {
+        showSyncStatus("Loading from Google Sheets...");
+        logDebug("Attempting to load data from Google Sheets...");
+
+        const response = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: googleSheetsConfig.sheetId,
+          range: `${googleSheetsConfig.sheetName}!${googleSheetsConfig.range}`
+        });
+
+        logDebug("Received response from Google Sheets API");
+
+        const data = response.result.values;
+        if (!data || data.length === 0) {
+          logDebug("No data found in Google Sheets");
+          return [];
+        }
+
+        logDebug(`Found ${data.length} rows in Google Sheets`);
+
+        // Process headers and rows
+        const headers = data[0];
+        const rows = data.slice(1);
+
+        const sheetTrips = rows.map((row, index) => {
+          try {
+            return {
+              bookingId: row[0] || '',
+              date: row[1] || '',
+              duty: row[2] || '',
+              reference: row[3] || '',
+              pickupLocation: row[4] || '',
+              dropLocation: row[5] || '',
+              customerName: row[6] || '',
+              customerNumber: row[7] || '',
+              driverName: row[8] || '',
+              driverNumber: row[9] || '',
+              vehicleModel: row[10] || '',
+              vehicleNumber: row[11] || '',
+              startTime: row[12] || '',
+              endTime: row[13] || '',
+              duration: row[14] || '',
+              extraHours: row[15] ? parseFloat(row[15]) : 0,
+              startKm: row[16] ? parseFloat(row[16]) : 0,
+              endKm: row[17] ? parseFloat(row[17]) : 0,
+              totalKm: row[18] ? parseFloat(row[18]) : 0,
+              extraKm: row[19] ? parseFloat(row[19]) : 0,
+              parking: row[20] ? parseFloat(row[20]) : 0,
+              toll: row[21] ? parseFloat(row[21]) : 0,
+              totalAmount: row[22] ? parseFloat(row[22]) : 0,
+              paidAmount: row[23] ? parseFloat(row[23]) : 0,
+              balanceAmount: row[24] ? parseFloat(row[24]) : 0,
+              paymentStatus: row[25] || '',
+              tripNotes: row[26] || '',
+              tripFiles: row[27] ? row[27].split(',').map(f => f.trim()) : []
+            };
+          } catch (error) {
+            logDebug(`Error processing row ${index + 1}: ${error}`, true);
+            return null;
+          }
+        }).filter(trip => trip !== null);
+
+        logDebug(`Successfully processed ${sheetTrips.length} trips from Google Sheets`);
+        return sheetTrips;
+      } catch (error) {
+        console.error("Error loading sheet data:", error);
+        logDebug(`Error loading sheet data: ${error}`, true);
+        showSyncStatus("Error loading from Google Sheets", true);
+        showError(`Failed to load sheet data: ${error.message}`);
+        return [];
+      }
+    }
+
+    // Push data to Google Sheets with proper formatting
+    async function pushToGoogleSheets() {
+      if (!gapiInitialized) {
+        logDebug("Google API not initialized, cannot push to sheets", true);
+        showError("Google API not initialized");
+        return false;
+      }
+
+      try {
+        showSyncStatus("Syncing to Google Sheets...");
+        logDebug("Preparing to push data to Google Sheets...");
+
+        if (!allTrips || allTrips.length === 0) {
+          logDebug("No trips to sync");
+          showSyncStatus("No data to sync", true);
+          return false;
+        }
+
+        logDebug(`Preparing ${allTrips.length} trips for Google Sheets`);
+
+        // Prepare the data for Google Sheets
+        const values = allTrips.map(trip => {
+          try {
+            return [
+              trip.bookingId || '',
+              trip.date || '',
+              trip.duty || '',
+              trip.reference || '',
+              trip.pickupLocation || '',
+              trip.dropLocation || '',
+              trip.customerName || '',
+              trip.customerNumber || '',
+              trip.driverName || '',
+              trip.driverNumber || '',
+              trip.vehicleModel || '',
+              trip.vehicleNumber || '',
+              trip.startTime || '',
+              trip.endTime || '',
+              trip.duration || '',
+              trip.extraHours || '',
+              trip.startKm || '',
+              trip.endKm || '',
+              trip.totalKm || '',
+              trip.extraKm || '',
+              trip.parking || '',
+              trip.toll || '',
+              trip.totalAmount || '',
+              trip.paidAmount || '',
+              trip.balanceAmount || '',
+              trip.paymentStatus || '',
+              trip.tripNotes || '',
+              (trip.tripFiles && trip.tripFiles.length) ? trip.tripFiles.join(', ') : ''
+            ];
+          } catch (error) {
+            logDebug(`Error processing trip ${trip.bookingId}: ${error}`, true);
+            return null;
+          }
+        }).filter(row => row !== null);
+
+        // Add headers as first row
+        values.unshift([
+          "Trip ID", "Trip Dates", "Duty", "Reference", "Pickup", "Drop",
+          "Customer Name", "Customer Number", "Driver Name", "Driver Number",
+          "Vehicle Model", "Vehicle Number", "Start Time", "End Time",
+          "Duration", "Extra Hours", "Start KM", "End KM", "Total KM",
+          "Extra KM", "Parking", "Toll", "Total Amount", "Paid Amount",
+          "Balance Amount", "Payment Status", "Notes", "Files"
+        ]);
+
+        logDebug(`Pushing ${values.length} rows to Google Sheets`);
+
+        // Clear existing data first
+        try {
+          await gapi.client.sheets.spreadsheets.values.clear({
+            spreadsheetId: googleSheetsConfig.sheetId,
+            range: `${googleSheetsConfig.sheetName}!A1:Z1000`
+          });
+          logDebug("Cleared existing data from Google Sheets");
+        } catch (clearError) {
+          logDebug(`Error clearing existing data: ${clearError}`, true);
+        }
+
+        // Write new data
+        const response = await gapi.client.sheets.spreadsheets.values.update({
+          spreadsheetId: googleSheetsConfig.sheetId,
+          range: `${googleSheetsConfig.sheetName}!A1`,
+          valueInputOption: 'RAW',
+          resource: { values }
+        });
+
+        logDebug("Successfully pushed to Google Sheets");
+        showSyncStatus("Synced with Google Sheets!", false, true);
+        return true;
+      } catch (error) {
+        console.error("Error pushing to Google Sheets:", error);
+        logDebug(`Error pushing to Google Sheets: ${error}`, true);
+        showSyncStatus("Error syncing with Google Sheets", true);
+        showError(`Failed to push to Google Sheets: ${error.message}`);
+        return false;
+      }
+    }
+
+    // Sync data between Firebase and Google Sheets
+    async function syncWithGoogleSheets() {
+      try {
+        if (!firebaseInitialized || !gapiInitialized) {
+          logDebug("APIs not initialized, cannot sync", true);
+          showError("Cannot sync - APIs not initialized");
+          return;
+        }
+
+        logDebug("Starting sync with Google Sheets...");
+
+        // First load data from Firebase
+        await loadTrips();
+
+        // Then push to Google Sheets
+        const success = await pushToGoogleSheets();
+
+        if (success) {
+          logDebug("Sync completed successfully");
+        } else {
+          logDebug("Sync completed with some errors");
+        }
+      } catch (error) {
+        console.error("Sync error:", error);
+        logDebug(`Sync error: ${error}`, true);
+        showSyncStatus("Sync failed", true);
+        showError(`Sync failed: ${error.message}`);
+      }
+    }
+
+    // Load trips from Firebase
     async function loadTrips() {
       try {
+        if (!firebaseInitialized) {
+          logDebug("Firebase not initialized, cannot load trips", true);
+          showError("Firebase not initialized");
+          return;
+        }
+
+        showSyncStatus("Loading trips from Firebase...");
+        logDebug("Loading trips from Firebase...");
+
         const snap = await get(child(dbRef, 'trips'));
         allTrips = [];
         if (snap.exists()) {
@@ -326,16 +1027,23 @@
             id: key,
             ...value
           }));
+          logDebug(`Loaded ${allTrips.length} trips from Firebase`);
+        } else {
+          logDebug("No trips found in Firebase");
         }
+
         renderTable();
         populateFilters();
-        await syncToGoogleSheets(allTrips); // Initial sync
+        showSyncStatus("Trips loaded successfully!", false, true);
       } catch (error) {
         console.error('Error loading trips:', error);
-        alert('Failed to load trips.');
+        logDebug(`Error loading trips: ${error}`, true);
+        showSyncStatus("Failed to load trips", true);
+        showError(`Failed to load trips: ${error.message}`);
       }
     }
 
+    // Populate driver and vehicle filters
     function populateFilters() {
       const driverSet = new Set();
       const vehicleSet = new Set();
@@ -361,13 +1069,15 @@
       });
     }
 
+    // Column keys for sorting
     const colKeys = [
       "bookingId", "tripDates", "duty", "reference", "pickupLocation", "dropLocation", "customerName", "customerNumber",
       "driverName", "driverNumber", "vehicleModel", "vehicleNumber", "startTime", "endTime", "duration", "extraHours",
       "startKm", "endKm", "totalKm", "extraKm", "parking", "toll", "totalAmount", "paidAmount", "balanceAmount",
-      "paymentStatus", "tripNotes", "tripFiles", "id"
+      "paymentStatus", "tripNotes", "tripFiles", "actions"
     ];
 
+    // Render table with filters/search/sort and sum row
     function renderTable() {
       const tbody = document.getElementById('tripTableBody');
       const tfoot = document.getElementById('sumRow');
@@ -383,7 +1093,9 @@
       let filtered = groupTrips(allTrips).filter(trip => {
         let match = true;
         if (search) {
-          match = Object.values(trip).some(val => (val + '').toLowerCase().includes(search));
+          match = Object.values(trip).some(val =>
+            (val + '').toLowerCase().includes(search)
+          );
         }
         if (match && driver) match = trip.driverName === driver;
         if (match && vehicle) match = trip.vehicleModel === vehicle;
@@ -393,7 +1105,8 @@
         return match;
       });
 
-      if (sortCol !== null && sortCol < colKeys.length - 2) {
+      // Sort
+      if (sortCol !== null && sortCol < colKeys.length - 1) {
         filtered.sort((a, b) => {
           let valA = a[colKeys[sortCol]];
           let valB = b[colKeys[sortCol]];
@@ -413,6 +1126,7 @@
         });
       }
 
+      // Sums
       let totalAmount = 0, paidAmount = 0, balanceAmount = 0;
       filtered.forEach(trip => {
         totalAmount += parseFloat(trip.totalAmount) || 0;
@@ -425,6 +1139,7 @@
         if (trip.paymentStatus === 'Paid') statusClass = 'status-badge status-paid';
         else if (trip.paymentStatus === 'Not Paid') statusClass = 'status-badge status-notpaid';
         else if (trip.paymentStatus === 'Partially Paid') statusClass = 'status-badge status-partial';
+        else statusClass = '';
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${trip.bookingId || ''}</td>
@@ -463,6 +1178,7 @@
         tbody.appendChild(tr);
       });
 
+      // Sum row
       let sumRow = '';
       for (let i = 0; i < 29; i++) {
         if (i === 22) sumRow += `<td class="sum-row">${totalAmount.toFixed(2)}</td>`;
@@ -473,30 +1189,29 @@
       }
       tfoot.innerHTML = sumRow;
 
+      // Add event listeners for edit and delete buttons
       document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.removeEventListener('click', handleEditClick);
         btn.addEventListener('click', handleEditClick);
       });
       document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.removeEventListener('click', handleDeleteClick);
         btn.addEventListener('click', handleDeleteClick);
       });
     }
 
+    // Handle edit button click
     function handleEditClick(event) {
       const tripId = event.currentTarget.dataset.id;
-      console.log('Edit button clicked for tripId:', tripId);
       openEditModal(tripId);
     }
 
-    async function handleDeleteClick(event) {
+    // Handle delete button click
+    function handleDeleteClick(event) {
       const tripId = event.currentTarget.dataset.id;
-      console.log('Delete button clicked for tripId:', tripId);
-      await deleteTrip(tripId);
+      deleteTrip(tripId);
     }
 
+    // Open edit modal
     function openEditModal(tripId) {
-      console.log('Opening edit modal for tripId:', tripId);
       const trip = allTrips.find(t => t.id === tripId);
       if (!trip) {
         console.error('Trip not found for id:', tripId);
@@ -533,20 +1248,15 @@
       document.getElementById('editTripNotes').value = trip.tripNotes || '';
 
       const modal = document.getElementById('editModal');
-      if (modal) {
-        modal.style.display = 'flex';
-        console.log('Modal display set to flex');
-      } else {
-        console.error('Edit modal not found in DOM');
-        alert('Error: Edit modal not found.');
-      }
+      modal.style.display = 'flex';
       updateModalTheme();
     }
 
+    // Save edited trip
     document.getElementById('editForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const tripId = document.getElementById('editTripId').value;
-      console.log('Saving trip for tripId:', tripId);
+
       const updatedTrip = {
         bookingId: allTrips.find(t => t.id === tripId).bookingId,
         date: document.getElementById('editDate').value || null,
@@ -579,11 +1289,11 @@
       };
 
       try {
-        await set(ref(db, `trips/${tripId}`), updatedTrip);
-        console.log('Trip updated successfully:', tripId);
+        await set(ref(dbRef, `trips/${tripId}`), updatedTrip);
         alert('Trip updated successfully!');
         document.getElementById('editModal').style.display = 'none';
         document.getElementById('editForm').reset();
+        await syncWithGoogleSheets();
         await loadTrips();
       } catch (error) {
         console.error('Error updating trip:', error);
@@ -591,100 +1301,25 @@
       }
     });
 
+    // Cancel edit
     document.getElementById('cancelEdit').addEventListener('click', () => {
-      console.log('Cancel edit clicked');
-      const modal = document.getElementById('editModal');
-      modal.style.display = 'none';
+      document.getElementById('editModal').style.display = 'none';
       document.getElementById('editForm').reset();
     });
 
+    // Delete trip
     async function deleteTrip(tripId) {
-      console.log('Deleting trip:', tripId);
       if (!confirm('Are you sure you want to delete this trip?')) return;
       try {
-        await remove(ref(db, `trips/${tripId}`));
-        console.log('Trip deleted successfully:', tripId);
+        await remove(ref(dbRef, `trips/${tripId}`));
         alert('Trip deleted successfully!');
+        await syncWithGoogleSheets();
         await loadTrips();
       } catch (error) {
         console.error('Error deleting trip:', error);
         alert('Failed to delete trip.');
       }
     }
-
-    async function syncToGoogleSheets(trips) {
-      try {
-        const response = await fetch(FIREBASE_FUNCTION_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'syncAll',
-            spreadsheetId: SPREADSHEET_ID,
-            sheetName: SHEET_NAME,
-            trips: trips.map(trip => ({
-              id: trip.id,
-              bookingId: trip.bookingId || '',
-              tripDates: trip.date ? formatDate(trip.date) : '',
-              duty: trip.duty || '',
-              reference: trip.reference || '',
-              pickupLocation: trip.pickupLocation || '',
-              dropLocation: trip.dropLocation || '',
-              customerName: trip.customerName || '',
-              customerNumber: trip.customerNumber || '',
-              driverName: trip.driverName || '',
-              driverNumber: trip.driverNumber || '',
-              vehicleModel: trip.vehicleModel || '',
-              vehicleNumber: trip.vehicleNumber || '',
-              startTime: formatTime12(trip.startTime) || '',
-              endTime: formatTime12(trip.endTime) || '',
-              duration: trip.duration || '',
-              extraHours: trip.extraHours || '',
-              startKm: trip.startKm || '',
-              endKm: trip.endKm || '',
-              totalKm: trip.totalKm || '',
-              extraKm: trip.extraKm || '',
-              parking: trip.parking || '',
-              toll: trip.toll || '',
-              totalAmount: trip.totalAmount || '',
-              paidAmount: trip.paidAmount || '',
-              balanceAmount: trip.balanceAmount || '',
-              paymentStatus: trip.paymentStatus || '',
-              tripNotes: trip.tripNotes || '',
-              tripFiles: (trip.tripFiles || []).join(', ')
-            }))
-          })
-        });
-        const result = await response.json();
-        if (result.success) {
-          console.log('Synced all trips to Google Sheets');
-        } else {
-          console.error('Error syncing to Google Sheets:', result.error);
-          alert('Failed to sync to Google Sheets.');
-        }
-      } catch (error) {
-        console.error('Error syncing to Google Sheets:', error);
-        alert('Failed to sync to Google Sheets.');
-      }
-    }
-
-    document.getElementById('syncSheets').addEventListener('click', async () => {
-      await syncToGoogleSheets(allTrips);
-      alert('Manually synced to Google Sheets!');
-    });
-
-    // Real-time Firebase listener
-    onValue(ref(db, 'trips'), async (snapshot) => {
-      allTrips = [];
-      if (snapshot.exists()) {
-        allTrips = Object.entries(snapshot.val()).map(([key, value]) => ({
-          id: key,
-          ...value
-        }));
-      }
-      renderTable();
-      populateFilters();
-      await syncToGoogleSheets(allTrips);
-    });
 
     // Export to PDF
     document.getElementById('exportPDF').addEventListener('click', function() {
@@ -694,7 +1329,14 @@
         unit: "pt",
         format: [1684, 1190]
       });
-      const head = [sheetHeaders.slice(0, -1)];
+      const head = [
+        [
+          "Trip ID", "Trip Dates", "Duty", "Reference", "Pickup", "Drop", "Customer Name", "Customer Number",
+          "Driver Name", "Driver Number", "Vehicle Model", "Vehicle Number", "Start Time", "End Time", "Duration",
+          "Extra Hours", "Start KM", "End KM", "Total KM", "Extra KM", "Parking", "Toll", "Total Amount",
+          "Paid Amount", "Balance Amount", "Payment Status", "Notes", "Files"
+        ]
+      ];
       const body = [];
       const search = document.getElementById('searchInput').value.toLowerCase();
       const driver = document.getElementById('driverFilter').value;
@@ -706,7 +1348,9 @@
       let filtered = groupTrips(allTrips).filter(trip => {
         let match = true;
         if (search) {
-          match = Object.values(trip).some(val => (val + '').toLowerCase().includes(search));
+          match = Object.values(trip).some(val =>
+            (val + '').toLowerCase().includes(search)
+          );
         }
         if (match && driver) match = trip.driverName === driver;
         if (match && vehicle) match = trip.vehicleModel === vehicle;
@@ -787,10 +1431,18 @@
     // Export to Excel
     document.getElementById('exportExcel').addEventListener('click', function() {
       const table = document.getElementById('tripTable');
-      const wb = XLSX.utils.table_to_book(table, { sheet: "Trips" });
+      const wb = XLSX.utils.table_to_book(table, {sheet:"Trips"});
       XLSX.writeFile(wb, 'trip-summary.xlsx');
     });
 
+    // Force sync button
+    document.getElementById('forceSync').addEventListener('click', async () => {
+      logDebug("Manual sync triggered by user");
+      await syncWithGoogleSheets();
+      await loadTrips();
+    });
+
+    // Column resizing
     function makeColumnsResizable(table) {
       const ths = table.querySelectorAll('th');
       ths.forEach((th, i) => {
@@ -821,6 +1473,7 @@
       });
     }
 
+    // Sorting
     function makeColumnsSortable(table) {
       const ths = table.querySelectorAll('th');
       ths.forEach((th, i) => {
@@ -839,12 +1492,55 @@
       });
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM fully loaded');
-      const table = document.getElementById('tripTable');
-      makeColumnsResizable(table);
-      makeColumnsSortable(table);
-      loadTrips();
+    // Initialize everything when page loads
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        logDebug("Initializing application...");
+
+        // Initialize Firebase
+        await initFirebase();
+
+        // Initialize Google API
+        try {
+          await initGoogleAPI();
+        } catch (googleError) {
+          logDebug(`Google API initialization failed: ${googleError}`, true);
+          showError(`Google Sheets sync disabled: ${googleError.message}`);
+        }
+
+        // Load trips from Firebase
+        await loadTrips();
+
+        // Set up Firebase listener for real-time updates
+        if (firebaseInitialized) {
+          onValue(ref(dbRef, 'trips'), async () => {
+            logDebug("Firebase data changed, reloading trips...");
+            await loadTrips();
+          });
+        }
+
+        // Set up periodic sync (every 5 minutes) if both APIs are initialized
+        if (firebaseInitialized && gapiInitialized) {
+          setInterval(async () => {
+            logDebug("Periodic sync triggered");
+            await syncWithGoogleSheets();
+          }, 300000);
+        }
+
+        // Initialize table features
+        const table = document.getElementById('tripTable');
+        makeColumnsResizable(table);
+        makeColumnsSortable(table);
+
+        // Show debug log for troubleshooting
+        document.getElementById('debugLog').classList.add('visible');
+
+      } catch (error) {
+        console.error("Initialization error:", error);
+        logDebug(`Initialization error: ${error}`, true);
+        showSyncStatus("Initialization failed", true);
+        showError(`Initialization failed: ${error.message}`);
+      }
     });
   </script>
 </body>

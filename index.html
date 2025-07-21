@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trip Entry - NST Travels</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #f3f4f6;
+      font-weight: 600;
+      transition: background 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 2.5rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s, color 0.3s;
+    }
+    .input-field, .select-field {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .input-field:focus, .select-field:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+    .btn {
+      font-size: 1.1rem;
+      font-weight: 700;
+      transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+    }
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .section-heading {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #1f2937;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+    }
+    .form-label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1f2937;
+    }
+    .nav-link {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .admin-link {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .footer-text {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .action-btn {
+      margin: 0 2px;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .edit-btn {
+      background: #fbbf24;
+      color: #fff;
+    }
+    .edit-btn:hover {
+      background: #f59e42;
+    }
+    .delete-btn {
+      background: #ef4444;
+      color: #fff;
+    }
+    .delete-btn:hover {
+      background: #dc2626;
+    }
+    @media (max-width: 640px) {
+      .container {
+        padding: 1.5rem;
+      }
+      .input-field, .select-field {
+        font-size: 0.9rem;
+      }
+      .btn {
+        font-size: 0.9rem;
+        padding: 0.75rem 1rem;
+      }
+      .section-heading {
+        font-size: 1.25rem;
+      }
+      .form-label {
+        font-size: 0.95rem;
+      }
+      .nav-link {
+        font-size: 0.9rem;
+      }
+      .admin-link {
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+      }
+      .footer-text {
+        font-size: 0.85rem;
+      }
+    }
+    html.dark body {
+      background: #18181b;
+      color: #f3f4f6;
+    }
+    html.dark .container {
+      background: #23232a;
+      color: #f3f4f6;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    html.dark input, html.dark select, html.dark textarea {
+      background: #18181b;
+      color: #f3f4f6;
+      border-color: #444;
+    }
+    html.dark .btn {
+      color: #fff;
+    }
+    html.dark .bg-gray-50 {
+      background: #23232a !important;
+    }
+    html.dark .bg-white {
+      background: #23232a !important;
+    }
+    html.dark .bg-gray-800 {
+      background: #18181b !important;
+    }
+    html.dark .bg-blue-600 {
+      background: #2563eb !important;
+    }
+    html.dark .bg-yellow-600 {
+      background: #ca8a04 !important;
+    }
+    html.dark .text-gray-900 {
+      color: #f3f4f6 !important;
+    }
+    html.dark .footer-text {
+      color: #d1d5db;
+    }
+    html.dark .border {
+      border-color: #444 !important;
+    }
+    .file-preview {
+      margin-top: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .file-preview img, .file-preview .file-icon {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+    html.dark .file-preview img, html.dark .file-preview .file-icon {
+      border-color: #444;
+      background: #23232a;
+    }
+  </style>
+</head>
+<body>
+  <!-- Dark Mode Toggle Button -->
+  <button id="themeToggle" class="fixed top-4 left-4 z-50 btn bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-3 py-2 rounded-md shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+    <i class="fas fa-moon"></i>
+  </button>
+
+  <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <a href="admin-panel.html" class="admin-link btn bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900">
+      <i class="fas fa-cog mr-2"></i> Admin Panel
+    </a>
+    <h3 class="text-3xl font-bold text-gray-900 mb-8"><i class="fas fa-road mr-2"></i> Trip Entry</h3>
+    <form id="tripForm" autocomplete="off" class="space-y-8">
+      <!-- Trip Details -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-calendar-alt mr-2"></i> Trip Details</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <label for="bookingId" class="form-label block mb-1">Trip ID</label>
+            <input type="text" class="input-field w-full" id="bookingId" readonly aria-label="Trip ID" />
+          </div>
+          <div>
+            <label for="date" class="form-label block mb-1">Start Date</label>
+            <input type="date" class="input-field w-full" id="date" aria-label="Start Date" />
+          </div>
+          <div>
+            <label for="endDate" class="form-label block mb-1">End Date</label>
+            <input type="date" class="input-field w-full" id="endDate" aria-label="End Date" disabled />
+          </div>
+          <div class="flex items-center">
+            <input type="checkbox" id="isPackageTrip" class="mr-2" />
+            <label for="isPackageTrip" class="form-label">Package Trip</label>
+          </div>
+          <div>
+            <label for="duty" class="form-label block mb-1">Duty</label>
+            <input type="text" class="input-field w-full" id="duty" list="dutySuggestions" aria-label="Duty" />
+            <datalist id="dutySuggestions"></datalist>
+          </div>
+          <div>
+            <label for="reference" class="form-label block mb-1">Reference</label>
+            <input type="text" class="input-field w-full" id="reference" aria-label="Reference" />
+          </div>
+        </div>
+      </div>
+      <!-- Locations -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-map-marker-alt mr-2"></i> Locations</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="pickupLocation" class="form-label block mb-1">Pickup</label>
+            <input type="text" class="input-field w-full" id="pickupLocation" aria-label="Pickup Location" />
+          </div>
+          <div>
+            <label for="dropLocation" class="form-label block mb-1">Drop</label>
+            <input type="text" class="input-field w-full" id="dropLocation" aria-label="Drop Location" />
+          </div>
+        </div>
+      </div>
+      <!-- Customer Info -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-user mr-2"></i> Customer Info</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="customerName" class="form-label block mb-1">Name</label>
+            <input type="text" class="input-field w-full" id="customerName" aria-label="Customer Name" />
+          </div>
+          <div>
+            <label for="customerNumber" class="form-label block mb-1">Number</label>
+            <input type="tel" class="input-field w-full" id="customerNumber" pattern="[0-9]{10,15}" aria-label="Customer Number" />
+          </div>
+        </div>
+      </div>
+      <!-- Driver Info -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-user-tie mr-2"></i> Driver Info</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="driverName" class="form-label block mb-1">Name</label>
+            <select class="select-field w-full" id="driverName" aria-label="Driver Name">
+              <option value="" selected disabled>Select Driver</option>
+            </select>
+          </div>
+          <div>
+            <label for="driverNumber" class="form-label block mb-1">Number</label>
+            <input type="tel" class="input-field w-full" id="driverNumber" readonly aria-label="Driver Number" />
+          </div>
+        </div>
+      </div>
+      <!-- Vehicle Info -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-car mr-2"></i> Vehicle Info</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="vehicleModel" class="form-label block mb-1">Model</label>
+            <select class="select-field w-full" id="vehicleModel" aria-label="Vehicle Model">
+              <option value="" selected disabled>Select Vehicle</option>
+            </select>
+          </div>
+          <div>
+            <label for="vehicleNumber" class="form-label block mb-1">Number</label>
+            <input type="text" class="input-field w-full" id="vehicleNumber" readonly aria-label="Vehicle Number" />
+          </div>
+        </div>
+      </div>
+      <!-- Time Details -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-clock mr-2"></i> Time Details</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <label for="startTime" class="form-label block mb-1">Start Time</label>
+            <input type="time" class="input-field w-full" id="startTime" aria-label="Start Time" />
+          </div>
+          <div>
+            <label for="endTime" class="form-label block mb-1">End Time</label>
+            <input type="time" class="input-field w-full" id="endTime" aria-label="End Time" />
+          </div>
+          <div>
+            <label for="duration" class="form-label block mb-1">Duration (hrs)</label>
+            <input type="text" class="input-field w-full" id="duration" aria-label="Duration" />
+          </div>
+          <div>
+            <label for="extraHours" class="form-label block mb-1">Extra Hours</label>
+            <input type="number" class="input-field w-full" id="extraHours" min="0" aria-label="Extra Hours" />
+          </div>
+        </div>
+      </div>
+      <!-- Distance Details -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-ruler mr-2"></i> Distance Details</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg-grid-cols-4 gap-6">
+          <div>
+            <label for="startKm" class="form-label block mb-1">Start KM</label>
+            <input type="number" class="input-field w-full" id="startKm" min="0" aria-label="Start KM" />
+          </div>
+          <div>
+            <label for="endKm" class="form-label block mb-1">End KM</label>
+            <input type="number" class="input-field w-full" id="endKm" min="0" aria-label="End KM" />
+          </div>
+          <div>
+            <label for="totalKm" class="form-label block mb-1">Total KM</label>
+            <input type="number" class="input-field w-full" id="totalKm" readonly aria-label="Total KM" />
+          </div>
+          <div>
+            <label for="extraKm" class="form-label block mb-1">Extra KM</label>
+            <input type="number" class="input-field w-full" id="extraKm" min="0" aria-label="Extra KM" />
+          </div>
+        </div>
+      </div>
+      <!-- Fare Details -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-money-bill-wave mr-2"></i> Fare Details</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <label for="parking" class="form-label block mb-1">Parking (₹)</label>
+            <input type="number" class="input-field w-full" id="parking" min="0" aria-label="Parking" />
+          </div>
+          <div>
+            <label for="toll" class="form-label block mb-1">Toll (₹)</label>
+            <input type="number" class="input-field w-full" id="toll" min="0" aria-label="Toll" />
+          </div>
+          <div>
+            <label for="totalAmount" class="form-label block mb-1">Total Amount (₹)</label>
+            <input type="number" class="input-field w-full" id="totalAmount" min="0" aria-label="Total Amount" />
+          </div>
+          <div>
+            <label for="paymentStatus" class="form-label block mb-1">Payment Status</label>
+            <select class="select-field w-full" id="paymentStatus" aria-label="Payment Status">
+              <option value="" selected disabled>Select</option>
+              <option value="Paid">Paid</option>
+              <option value="Not Paid">Not Paid</option>
+              <option value="Partially Paid">Partially Paid</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6" id="paidAmountRow" style="display:none;">
+          <div>
+            <label for="paidAmount" class="form-label block mb-1">Paid Amount (₹)</label>
+            <input type="number" class="input-field w-full" id="paidAmount" min="0" aria-label="Paid Amount" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6" id="balanceAmountRow" style="display:none;">
+          <div>
+            <label for="balanceAmount" class="form-label block mb-1">Balance Amount (₹)</label>
+            <input type="number" class="input-field w-full" id="balanceAmount" readonly aria-label="Balance Amount" />
+          </div>
+        </div>
+      </div>
+      <!-- Trip Notes & File Upload -->
+      <div>
+        <h5 class="section-heading"><i class="fas fa-sticky-note mr-2"></i> Trip Notes & Attachments</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="tripNotes" class="form-label block mb-1">Notes</label>
+            <textarea id="tripNotes" class="input-field w-full" rows="3" placeholder="Special instructions, remarks, etc."></textarea>
+          </div>
+          <div>
+            <label for="tripFiles" class="form-label block mb-1">Attach Files</label>
+            <input type="file" id="tripFiles" class="input-field w-full" multiple accept="image/*,.pdf,.doc,.docx" />
+            <div id="filePreview" class="file-preview"></div>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn bg-blue-600 text-white w-full py-4 rounded-md hover:bg-blue-700">
+        <i class="fas fa-save mr-2"></i> Save Trip
+      </button>
+    </form>
+  </div>
+
+  <!-- Non-Trip Day Section -->
+  <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-8 bg-gray-50 rounded-lg shadow">
+    <h3 class="text-2xl font-bold text-gray-900 mb-4"><i class="fas fa-calendar-times mr-2"></i> Mark Non-Trip Day</h3>
+    <form id="nonTripForm" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="nonTripDate" class="form-label block mb-1">Date</label>
+          <input type="date" class="input-field w-full" id="nonTripDate" required />
+        </div>
+        <div>
+          <label for="nonTripStatus" class="form-label block mb-1">Status</label>
+          <select class="select-field w-full" id="nonTripStatus" required>
+            <option value="" selected disabled>Select Status</option>
+            <option value="No Duty">No Duty</option>
+            <option value="Vehicle Service">Vehicle Service</option>
+          </select>
+        </div>
+        <div>
+          <label for="nonTripVehicle" class="form-label block mb-1">Vehicle</label>
+          <select class="select-field w-full" id="nonTripVehicle" required>
+            <option value="" selected disabled>Select Vehicle</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn bg-blue-600 text-white w-full py-2 rounded-md hover:bg-blue-700" id="nonTripSaveBtn">
+        <i class="fas fa-save mr-2"></i> <span id="nonTripBtnText">Save Non-Trip Day</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Mark Driver Leave Section -->
+  <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-8 bg-gray-50 rounded-lg shadow">
+    <h3 class="text-2xl font-bold text-gray-900 mb-4"><i class="fas fa-user-times mr-2"></i> Mark Driver Leave</h3>
+    <form id="driverLeaveForm" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="leaveDate" class="form-label block mb-1">Date</label>
+          <input type="date" class="input-field w-full" id="leaveDate" required />
+        </div>
+        <div>
+          <label for="leaveDriver" class="form-label block mb-1">Driver</label>
+          <select class="select-field w-full" id="leaveDriver" required>
+            <option value="" selected disabled>Select Driver</option>
+          </select>
+        </div>
+        <div>
+          <label for="leaveReason" class="form-label block mb-1">Reason</label>
+          <input type="text" class="input-field w-full" id="leaveReason" placeholder="Reason for leave" required />
+        </div>
+      </div>
+      <button type="submit" class="btn bg-yellow-600 text-white w-full py-2 rounded-md hover:bg-yellow-700" id="driverLeaveSaveBtn">
+        <i class="fas fa-save mr-2"></i> <span id="driverLeaveBtnText">Save Driver Leave</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-6 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="footer-text">© 2025 NST Travels. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, set, child, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz2rGDr0iREns6Rg6r1z5EHE3qhLDnEzs",
+      authDomain: "narayananselvitravels-26dcb.firebaseapp.com",
+      databaseURL: "https://narayananselvitravels-26dcb-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "narayananselvitravels-26dcb",
+      storageBucket: "narayananselvitravels-26dcb.appspot.com",
+      messagingSenderId: "395599682835",
+      appId: "1:395599682835:web:9d46e03ca14aa0738dcee6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db);
+
+    // --- Trip ID Generation ---
+    async function generateTripId() {
+      try {
+        const snap = await get(child(dbRef, 'tripResetFlag'));
+        const reset = snap.exists() && (snap.val() === true || snap.val() === "reset");
+        if (reset) return "#NST001";
+        const tripsSnap = await get(child(dbRef, 'trips'));
+        let maxNum = 0;
+        if (tripsSnap.exists()) {
+          Object.values(tripsSnap.val()).forEach(trip => {
+            if (trip.bookingId && trip.bookingId.startsWith("#NST")) {
+              const num = parseInt(trip.bookingId.replace("#NST", ""), 10);
+              if (!isNaN(num) && num > maxNum) maxNum = num;
+            }
+          });
+        }
+        return `#NST${String(maxNum + 1).padStart(3, '0')}`;
+      } catch (error) {
+        console.error("Error generating trip ID:", error);
+        return "#NST001";
+      }
+    }
+
+    function timeToMinutes(timeStr) {
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      return hours * 60 + minutes;
+    }
+
+    async function tripIdExists(tripId) {
+      try {
+        const snap = await get(child(dbRef, 'trips'));
+        if (snap.exists()) {
+          return Object.values(snap.val()).some(trip => trip.bookingId === tripId);
+        }
+        return false;
+      } catch (error) {
+        console.error("Error checking trip ID:", error);
+        return false;
+      }
+    }
+
+    async function loadDrivers() {
+      try {
+        const snap = await get(child(dbRef, 'drivers'));
+        const select = document.getElementById("driverName");
+        select.innerHTML = '<option value="" selected disabled>Select Driver</option>';
+        if (snap.exists()) {
+          const data = snap.val();
+          Object.values(data).forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d.name;
+            opt.text = d.name;
+            opt.setAttribute("data-number", d.number || "");
+            select.appendChild(opt);
+          });
+        }
+      } catch (error) {
+        alert("⚠️ Failed to load drivers. Please check your connection.");
+      }
+    }
+
+    async function loadVehicles() {
+      try {
+        const snap = await get(child(dbRef, 'vehicles'));
+        const select = document.getElementById("vehicleModel");
+        select.innerHTML = '<option value="" selected disabled>Select Vehicle</option>';
+        if (snap.exists()) {
+          const data = snap.val();
+          Object.values(data).forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v.model;
+            opt.text = v.model;
+            opt.setAttribute("data-number", v.number || "");
+            select.appendChild(opt);
+          });
+        }
+      } catch (error) {
+        alert("⚠️ Failed to load vehicles. Please check your connection.");
+      }
+    }
+
+    async function loadDuties() {
+      try {
+        const snap = await get(child(dbRef, 'trips'));
+        const datalist = document.getElementById("dutySuggestions");
+        datalist.innerHTML = '';
+        if (snap.exists()) {
+          const duties = new Set();
+          Object.values(snap.val()).forEach(trip => {
+            if (trip.duty && trip.duty.trim()) {
+              duties.add(trip.duty.trim());
+            }
+          });
+          duties.forEach(duty => {
+            const option = document.createElement("option");
+            option.value = duty;
+            datalist.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error("Error loading duties:", error);
+      }
+    }
+
+    // Non-Trip Day Section with Edit/Delete
+    let editingNonTripKey = null;
+
+    async function loadNonTripVehicles() {
+      try {
+        const snap = await get(child(dbRef, 'vehicles'));
+        const select = document.getElementById("nonTripVehicle");
+        select.innerHTML = '<option value="" selected disabled>Select Vehicle</option>';
+        if (snap.exists()) {
+          const data = snap.val();
+          Object.values(data).forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v.model + "||" + v.number;
+            opt.text = v.model;
+            opt.setAttribute("data-number", v.number || "");
+            select.appendChild(opt);
+          });
+        }
+      } catch (error) {}
+    }
+
+    document.getElementById("nonTripForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const date = document.getElementById("nonTripDate").value;
+      const status = document.getElementById("nonTripStatus").value;
+      const vehicleValue = document.getElementById("nonTripVehicle").value;
+      if (!date || !status || !vehicleValue) {
+        alert("Please fill all fields.");
+        return;
+      }
+      const [vehicleModel, vehicleNumber] = vehicleValue.split("||");
+      try {
+        await set(ref(db, `nonTripDays/${date}`), {
+          status,
+          vehicleModel,
+          vehicleNumber
+        });
+        alert(editingNonTripKey ? "Non-trip day updated!" : "Non-trip day saved!");
+        editingNonTripKey = null;
+        document.getElementById("nonTripBtnText").textContent = "Save Non-Trip Day";
+        e.target.reset();
+      } catch (error) {
+        alert("Failed to save non-trip day.");
+      }
+    });
+
+    // Driver Leave Section with Edit/Delete
+    let editingDriverLeaveKey = null;
+
+    async function loadLeaveDrivers() {
+      try {
+        const snap = await get(child(dbRef, 'drivers'));
+        const select = document.getElementById("leaveDriver");
+        select.innerHTML = '<option value="" selected disabled>Select Driver</option>';
+        if (snap.exists()) {
+          const data = snap.val();
+          Object.values(data).forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d.name + "||" + d.number;
+            opt.text = d.name;
+            opt.setAttribute("data-number", d.number || "");
+            select.appendChild(opt);
+          });
+        }
+      } catch (error) {}
+    }
+
+    document.getElementById("driverLeaveForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const date = document.getElementById("leaveDate").value;
+      const driverValue = document.getElementById("leaveDriver").value;
+      const reason = document.getElementById("leaveReason").value;
+      if (!date || !driverValue || !reason) {
+        alert("Please fill all fields.");
+        return;
+      }
+      const [driverName, driverNumber] = driverValue.split("||");
+      const key = `${date}_${driverName}`;
+      try {
+        await set(ref(db, `driverLeaves/${key}`), {
+          driverName,
+          driverNumber,
+          reason
+        });
+        alert(editingDriverLeaveKey ? "Driver leave updated!" : "Driver leave saved!");
+        editingDriverLeaveKey = null;
+        document.getElementById("driverLeaveBtnText").textContent = "Save Driver Leave";
+        e.target.reset();
+      } catch (error) {
+        alert("Failed to save driver leave.");
+      }
+    });
+
+    // Trip Entry JS
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        document.getElementById("bookingId").value = await generateTripId();
+        await Promise.all([loadDrivers(), loadVehicles(), loadNonTripVehicles(), loadLeaveDrivers(), loadDuties()]);
+        document.getElementById("startTime").addEventListener("change", calcDuration);
+        document.getElementById("endTime").addEventListener("change", calcDuration);
+        document.getElementById("startKm").addEventListener("input", calcTotalKm);
+        document.getElementById("endKm").addEventListener("input", calcTotalKm);
+        document.getElementById("driverName").addEventListener("change", function () {
+          const number = this.selectedOptions[0]?.getAttribute("data-number") || "";
+          document.getElementById("driverNumber").value = number;
+        });
+        document.getElementById("vehicleModel").addEventListener("change", function () {
+          const number = this.selectedOptions[0]?.getAttribute("data-number") || "";
+          document.getElementById("vehicleNumber").value = number;
+        });
+        document.getElementById("paymentStatus").addEventListener("change", handlePaymentStatusChange);
+        document.getElementById("paidAmount").addEventListener("input", updateBalanceAmount);
+        document.getElementById("totalAmount").addEventListener("input", updateBalanceAmount);
+        document.getElementById("isPackageTrip").addEventListener("change", function () {
+          document.getElementById("endDate").disabled = !this.checked;
+          if (!this.checked) {
+            document.getElementById("endDate").value = "";
+            calcDuration(); // Recalculate duration for single-day trip
+          }
+        });
+        const resetFlagRef = ref(db, 'tripResetFlag/');
+        onValue(resetFlagRef, async (snapshot) => {
+          const flag = snapshot.val();
+          if (flag === true || flag === "reset") {
+            document.getElementById("bookingId").value = "#NST001";
+          }
+        });
+        handlePaymentStatusChange();
+      } catch (error) {
+        alert("⚠️ Failed to initialize form. Please refresh the page.");
+      }
+    });
+
+    function calcDuration() {
+      const start = document.getElementById("startTime").value;
+      const end = document.getElementById("endTime").value;
+      const durationInput = document.getElementById("duration");
+      const isPackageTrip = document.getElementById("isPackageTrip").checked;
+      
+      if (isPackageTrip) {
+        durationInput.readOnly = false;
+      } else if (start && end) {
+        let startMinutes = timeToMinutes(start);
+        let endMinutes = timeToMinutes(end);
+        if (endMinutes < startMinutes) {
+          endMinutes += 24 * 60;
+        }
+        const durationMinutes = endMinutes - startMinutes;
+        const hours = Math.floor(durationMinutes / 60);
+        const minutes = durationMinutes % 60;
+        durationInput.value = minutes > 0 ? `${hours} hours ${minutes} minutes` : `${hours} hours`;
+        durationInput.readOnly = true;
+      } else {
+        durationInput.readOnly = false;
+      }
+    }
+
+    function calcTotalKm() {
+      const sk = parseFloat(document.getElementById("startKm").value);
+      const ek = parseFloat(document.getElementById("endKm").value);
+      if (!isNaN(sk) && !isNaN(ek) && ek >= sk) {
+        document.getElementById("totalKm").value = (ek - sk).toFixed(2);
+      } else {
+        document.getElementById("totalKm").value = "";
+      }
+    }
+
+    function handlePaymentStatusChange() {
+      const status = document.getElementById("paymentStatus").value;
+      const paidRow = document.getElementById("paidAmountRow");
+      const balanceRow = document.getElementById("balanceAmountRow");
+      if (status === "Paid" || status === "Partially Paid") {
+        paidRow.style.display = "block";
+        balanceRow.style.display = status === "Partially Paid" ? "block" : "none";
+      } else {
+        paidRow.style.display = "none";
+        balanceRow.style.display = "none";
+        document.getElementById("paidAmount").value = "";
+        document.getElementById("balanceAmount").value = "";
+      }
+      updateBalanceAmount();
+    }
+
+    function updateBalanceAmount() {
+      const total = parseFloat(document.getElementById("totalAmount").value);
+      const paid = parseFloat(document.getElementById("paidAmount").value);
+      if (!isNaN(total) && !isNaN(paid)) {
+        const balance = total - paid;
+        document.getElementById("balanceAmount").value = balance >= 0 ? balance.toFixed(2) : "";
+      } else {
+        document.getElementById("balanceAmount").value = "";
+      }
+    }
+
+    function getDatesInRange(startDate, endDate) {
+      const dates = [];
+      let currentDate = new Date(startDate);
+      const end = new Date(endDate);
+      while (currentDate <= end) {
+        dates.push(new Date(currentDate).toISOString().split('T')[0]);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      return dates;
+    }
+
+    // --- DARK MODE TOGGLE ---
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+    function updateThemeIcon() {
+      if (htmlEl.classList.contains('dark')) {
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+      } else {
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+      }
+    }
+    if (localStorage.getItem('theme') === 'dark' ||
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.add('dark');
+    } else {
+      htmlEl.classList.remove('dark');
+    }
+    updateThemeIcon();
+    themeToggle.addEventListener('click', () => {
+      htmlEl.classList.toggle('dark');
+      localStorage.setItem('theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
+      updateThemeIcon();
+    });
+
+    // --- FILE UPLOAD PREVIEW ---
+    const tripFilesInput = document.getElementById('tripFiles');
+    const filePreview = document.getElementById('filePreview');
+    tripFilesInput.addEventListener('change', function() {
+      filePreview.innerHTML = '';
+      Array.from(this.files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          img.onload = () => URL.revokeObjectURL(img.src);
+          filePreview.appendChild(img);
+        } else {
+          const icon = document.createElement('div');
+          icon.className = 'file-icon flex items-center justify-center';
+          icon.innerHTML = '<i class="fas fa-file-alt"></i>';
+          filePreview.appendChild(icon);
+        }
+      });
+    });
+
+    // --- TRIP FORM SUBMIT: Add notes and file names to data ---
+    document.getElementById("tripForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const driverName = document.getElementById("driverName").value;
+      const vehicleModel = document.getElementById("vehicleModel").value;
+      const isPackageTrip = document.getElementById("isPackageTrip").checked;
+      const startDate = document.getElementById("date").value;
+      const endDate = document.getElementById("endDate").value;
+
+      if (!driverName || !vehicleModel) {
+        alert("❌ Please select a driver and vehicle.");
+        return;
+      }
+      if (isPackageTrip && (!startDate || !endDate)) {
+        alert("❌ Please provide both start and end dates for a package trip.");
+        return;
+      }
+      if (isPackageTrip && new Date(endDate) < new Date(startDate)) {
+        alert("❌ End date must be on or after start date.");
+        return;
+      }
+
+      const bookingId = document.getElementById("bookingId").value;
+      if (await tripIdExists(bookingId)) {
+        alert("❌ Trip ID already exists. Cannot save.");
+        return;
+      }
+
+      // Collect file names (for demo; for real use, upload to Firebase Storage and save URLs)
+      const files = Array.from(document.getElementById("tripFiles").files);
+      const fileNames = files.map(f => f.name);
+
+      const data = {
+        bookingId: bookingId,
+        date: startDate,
+        endDate: isPackageTrip ? endDate : startDate,
+        duty: document.getElementById("duty").value,
+        reference: document.getElementById("reference").value,
+        pickupLocation: document.getElementById("pickupLocation").value,
+        dropLocation: document.getElementById("dropLocation").value,
+        customerName: document.getElementById("customerName").value,
+        customerNumber: document.getElementById("customerNumber").value,
+        driverName: driverName,
+        driverNumber: document.getElementById("driverNumber").value,
+        vehicleModel: vehicleModel,
+        vehicleNumber: document.getElementById("vehicleNumber").value,
+        startTime: document.getElementById("startTime").value,
+        endTime: document.getElementById("endTime").value,
+        duration: document.getElementById("duration").value,
+        extraHours: document.getElementById("extraHours").value,
+        startKm: document.getElementById("startKm").value,
+        endKm: document.getElementById("endKm").value,
+        totalKm: document.getElementById("totalKm").value,
+        extraKm: document.getElementById("extraKm").value,
+        parking: document.getElementById("parking").value,
+        toll: document.getElementById("toll").value,
+        totalAmount: document.getElementById("totalAmount").value,
+        paymentStatus: document.getElementById("paymentStatus").value,
+        paidAmount: document.getElementById("paidAmount").value || "0",
+        balanceAmount: document.getElementById("balanceAmount").value || "0",
+        isPackage: isPackageTrip,
+        tripNotes: document.getElementById("tripNotes").value,
+        tripFiles: fileNames
+      };
+
+      try {
+        if (isPackageTrip) {
+          const dates = getDatesInRange(startDate, endDate);
+          for (const date of dates) {
+            await push(ref(db, "trips/"), { ...data, date });
+          }
+        } else {
+          await push(ref(db, "trips/"), data);
+        }
+        if (bookingId === "#NST001") {
+          await set(ref(db, 'tripResetFlag'), false);
+        }
+        alert("Trip saved!");
+        form.reset();
+        document.getElementById("bookingId").value = await generateTripId();
+        document.getElementById("driverName").value = "";
+        document.getElementById("vehicleModel").value = "";
+        document.getElementById("driverNumber").value = "";
+        document.getElementById("vehicleNumber").value = "";
+        document.getElementById("isPackageTrip").checked = false;
+        document.getElementById("endDate").disabled = true;
+        document.getElementById("endDate").value = "";
+        handlePaymentStatusChange();
+        filePreview.innerHTML = "";
+        await loadDuties();
+      } catch (error) {
+        alert("⚠️ Failed to save trip. Please try again.");
+      }
+    });
+  </script>
+</body>
+</html>

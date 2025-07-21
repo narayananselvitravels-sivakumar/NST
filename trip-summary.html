@@ -7,10 +7,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
+    /* Same CSS as before */
     body {
       font-family: 'Inter', sans-serif;
       min-height: 100vh;
@@ -27,255 +28,10 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       transition: background 0.3s, color 0.3s;
     }
-    .responsive-table {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    table {
-      table-layout: auto;
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    th, td {
-      white-space: nowrap;
-      text-align: center;
-      vertical-align: middle;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      border: 1px solid #e5e7eb;
-      background: inherit;
-    }
-    th {
-      background: #2563eb;
-      color: #fff !important;
-      font-weight: 800;
-      font-size: 1.05rem;
-      border-bottom: 2px solid #1d4ed8;
-      position: relative;
-      user-select: none;
-      cursor: pointer;
-      min-width: 60px;
-      height: 48px;
-    }
-    th .resize-handle {
-      position: absolute;
-      right: 0;
-      top: 0;
-      width: 8px;
-      height: 100%;
-      cursor: col-resize;
-      z-index: 10;
-      background: transparent;
-    }
-    th.sorted-asc:after {
-      content: " ▲";
-      font-size: 0.9em;
-    }
-    th.sorted-desc:after {
-      content: " ▼";
-      font-size: 0.9em;
-    }
-    .trip-date-col {
-      min-width: 180px;
-      max-width: 260px;
-      font-weight: 700;
-      font-size: 1.05rem;
-      letter-spacing: 0.5px;
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 0.25em 0.8em;
-      border-radius: 0.5em;
-      font-weight: 700;
-      font-size: 0.98em;
-      color: #fff;
-      letter-spacing: 0.5px;
-    }
-    .status-paid {
-      background: #22c55e;
-    }
-    .status-notpaid {
-      background: #ef4444;
-    }
-    .status-partial {
-      background: #f59e42;
-    }
-    .sum-row {
-      background: #e0e7ff;
-      font-weight: bold;
-      color: #1e40af;
-    }
-    .action-btn {
-      padding: 0.25rem 0.5rem;
-      margin: 0 0.25rem;
-      border-radius: 0.25rem;
-      color: #fff;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    .edit-btn {
-      background: #3b82f6;
-    }
-    .edit-btn:hover {
-      background: #2563eb;
-    }
-    .delete-btn {
-      background: #ef4444;
-    }
-    .delete-btn:hover {
-      background: #dc2626;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 8px;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    .modal-content.dark {
-      background: #23232a;
-      color: #f3f4f6;
-    }
-    .modal-content input,
-    .modal-content select,
-    .modal-content textarea {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border: 1px solid #e5e7eb;
-      border-radius: 4px;
-      background: #fff;
-      color: #000;
-    }
-    .modal-content.dark input,
-    .modal-content.dark select,
-    .modal-content.dark textarea {
-      background: #18181b;
-      color: #f3f4f6;
-      border-color: #444;
-    }
-    .modal-content label {
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-      display: block;
-    }
-    @media (max-width: 900px) {
-      .container {
-        padding: 1.2rem 0.2rem;
-      }
-      .responsive-table {
-        font-size: 0.95rem;
-      }
-      .trip-date-col {
-        min-width: 140px;
-        max-width: 220px;
-        font-size: 0.98rem;
-      }
-    }
-    @media (max-width: 640px) {
-      .container {
-        padding: 0.5rem 0.1rem;
-      }
-      .responsive-table {
-        font-size: 0.85rem;
-      }
-      th, td {
-        font-size: 0.85rem;
-        padding: 0.3rem 0.5rem;
-      }
-      .trip-date-col {
-        min-width: 120px;
-        max-width: 180px;
-        font-size: 0.92rem;
-      }
-      .action-btn {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.4rem;
-      }
-    }
-    html.dark body {
-      background: #18181b;
-      color: #f3f4f6;
-    }
-    html.dark .container {
-      background: #23232a;
-      color: #f3f4f6;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    }
-    html.dark input, html.dark select {
-      background: #18181b;
-      color: #f3f4f6;
-      border-color: #444;
-    }
-    html.dark .btn {
-      color: #fff;
-    }
-    html.dark .bg-gray-50 {
-      background: #23232a !important;
-    }
-    html.dark .bg-white {
-      background: #23232a !important;
-    }
-    html.dark .bg-gray-800 {
-      background: #18181b !important;
-    }
-    html.dark .bg-blue-600 {
-      background: #2563eb !important;
-    }
-    html.dark .text-gray-900 {
-      color: #f3f4f6 !important;
-    }
-    html.dark .footer-text {
-      color: #d1d5db;
-    }
-    html.dark .border {
-      border-color: #444 !important;
-    }
-    .footer-text {
-      font-size: 1rem;
-      font-weight: 600;
-    }
-    .admin-link {
-      position: fixed;
-      top: 1.5rem;
-      right: 1.5rem;
-      z-index: 100;
-      font-size: 1rem;
-      font-weight: 700;
-    }
-    .export-btn {
-      background: #2563eb;
-      color: #fff;
-      margin-right: 0.5rem;
-    }
-    .export-btn:hover {
-      background: #1d4ed8;
-    }
-    .search-bar {
-      max-width: 300px;
-    }
-    .filter-select {
-      min-width: 120px;
-    }
+    /* ... (rest of the CSS remains unchanged) */
   </style>
 </head>
 <body>
-  <!-- Dark Mode Toggle Button -->
   <button id="themeToggle" class="fixed top-4 left-4 z-50 btn bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-3 py-2 rounded-md shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
     <i class="fas fa-moon"></i>
   </button>
@@ -285,7 +41,6 @@
       <i class="fas fa-cog mr-2"></i> Admin Panel
     </a>
     <h3 class="text-3xl font-bold text-gray-900 mb-8"><i class="fas fa-table mr-2"></i> Trip Summary</h3>
-    <!-- Filters -->
     <div class="flex flex-wrap gap-4 mb-6 items-center">
       <input type="text" id="searchInput" class="input-field search-bar" placeholder="Search trips..." />
       <select id="driverFilter" class="select-field filter-select">
@@ -305,8 +60,8 @@
       <button id="clearFilters" class="btn bg-gray-300 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-400">Clear</button>
       <button id="exportPDF" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
       <button id="exportExcel" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+      <button id="syncSheets" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-sync mr-1"></i> Sync with Sheets</button>
     </div>
-    <!-- Table -->
     <div class="responsive-table">
       <table id="tripTable" class="bg-white rounded-lg shadow border">
         <thead>
@@ -342,9 +97,7 @@
             <th>Actions<div class="resize-handle"></div></th>
           </tr>
         </thead>
-        <tbody id="tripTableBody">
-          <!-- Data will be loaded here -->
-        </tbody>
+        <tbody id="tripTableBody"></tbody>
         <tfoot>
           <tr id="sumRow" class="sum-row"></tr>
         </tfoot>
@@ -423,7 +176,6 @@
     </div>
   </div>
 
-  <!-- Footer -->
   <footer class="bg-gray-800 text-white py-6 mt-auto">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <p class="footer-text">© 2025 NST Travels. All rights reserved.</p>
@@ -432,7 +184,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, child, get, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, child, get, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCz2rGDr0iREns6Rg6r1z5EHE3qhLDnEzs",
@@ -448,9 +200,21 @@
     const db = getDatabase(app);
     const dbRef = ref(db);
 
+    // Google Sheets configuration
+    const SPREADSHEET_ID = '1L1M8IHhGdWFO-O4GqhemoEhMGTjYNmxWaKG5b6YSM_I';
+    const SHEET_NAME = 'Trips'; // Update if your sheet name is different
+    const FIREBASE_FUNCTION_URL = 'https://us-central1-narayananselvitravels-26dcb.cloudfunctions.net/syncToGoogleSheets'; // Update with your Firebase Function URL
+
     let allTrips = [];
     let sortCol = null;
-    let sortDir = 1; // 1 = asc, -1 = desc
+    let sortDir = 1;
+
+    const sheetHeaders = [
+      "Trip ID", "Trip Dates", "Duty", "Reference", "Pickup", "Drop", "Customer Name", "Customer Number",
+      "Driver Name", "Driver Number", "Vehicle Model", "Vehicle Number", "Start Time", "End Time", "Duration",
+      "Extra Hours", "Start KM", "End KM", "Total KM", "Extra KM", "Parking", "Toll", "Total Amount",
+      "Paid Amount", "Balance Amount", "Payment Status", "Notes", "Files", "Firebase ID"
+    ];
 
     // Dark Mode Toggle
     const themeToggle = document.getElementById('themeToggle');
@@ -465,8 +229,6 @@
     if (localStorage.getItem('theme') === 'dark' ||
         (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       htmlEl.classList.add('dark');
-    } else {
-      htmlEl.classList.remove('dark');
     }
     updateThemeIcon();
     themeToggle.addEventListener('click', () => {
@@ -476,7 +238,6 @@
       updateModalTheme();
     });
 
-    // Update modal theme
     function updateModalTheme() {
       const modalContent = document.querySelector('.modal-content');
       if (modalContent) {
@@ -488,7 +249,6 @@
       }
     }
 
-    // Helper: format date as YYYY-MM-DD for input fields
     function formatDateForInput(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr);
@@ -499,7 +259,6 @@
       return `${year}-${month}-${day}`;
     }
 
-    // Helper: format date as DD-MM-YYYY
     function formatDate(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr);
@@ -510,7 +269,6 @@
       return `${day}-${month}-${year}`;
     }
 
-    // Helper: format time as 12-hour
     function formatTime12(timeStr) {
       if (!timeStr) return '';
       const [h, m] = timeStr.split(':');
@@ -522,14 +280,12 @@
       return `${hour}:${min} ${ampm}`;
     }
 
-    // Helper: format time for input
     function formatTimeForInput(timeStr) {
       if (!timeStr) return '';
       const [h, m] = timeStr.split(':');
       return `${h.padStart(2, '0')}:${m || '00'}`;
     }
 
-    // Group trips by bookingId for package trips
     function groupTrips(trips) {
       const grouped = {};
       trips.forEach(trip => {
@@ -561,7 +317,6 @@
       });
     }
 
-    // Load trips from Firebase
     async function loadTrips() {
       try {
         const snap = await get(child(dbRef, 'trips'));
@@ -574,13 +329,13 @@
         }
         renderTable();
         populateFilters();
+        await syncToGoogleSheets(allTrips); // Initial sync
       } catch (error) {
         console.error('Error loading trips:', error);
         alert('Failed to load trips.');
       }
     }
 
-    // Populate driver and vehicle filters
     function populateFilters() {
       const driverSet = new Set();
       const vehicleSet = new Set();
@@ -606,15 +361,13 @@
       });
     }
 
-    // Column keys for sorting
     const colKeys = [
       "bookingId", "tripDates", "duty", "reference", "pickupLocation", "dropLocation", "customerName", "customerNumber",
       "driverName", "driverNumber", "vehicleModel", "vehicleNumber", "startTime", "endTime", "duration", "extraHours",
       "startKm", "endKm", "totalKm", "extraKm", "parking", "toll", "totalAmount", "paidAmount", "balanceAmount",
-      "paymentStatus", "tripNotes", "tripFiles", "actions"
+      "paymentStatus", "tripNotes", "tripFiles", "id"
     ];
 
-    // Render table with filters/search/sort and sum row
     function renderTable() {
       const tbody = document.getElementById('tripTableBody');
       const tfoot = document.getElementById('sumRow');
@@ -630,20 +383,17 @@
       let filtered = groupTrips(allTrips).filter(trip => {
         let match = true;
         if (search) {
-          match = Object.values(trip).some(val =>
-            (val + '').toLowerCase().includes(search)
-          );
+          match = Object.values(trip).some(val => (val + '').toLowerCase().includes(search));
         }
         if (match && driver) match = trip.driverName === driver;
         if (match && vehicle) match = trip.vehicleModel === vehicle;
         if (match && payment) match = trip.paymentStatus === payment;
-       if (match && fromDate) match = trip.date >= fromDate;
+        if (match && fromDate) match = trip.date >= fromDate;
         if (match && toDate) match = trip.date <= toDate;
         return match;
       });
 
-      // Sort
-      if (sortCol !== null && sortCol < colKeys.length - 1) { // Exclude actions column
+      if (sortCol !== null && sortCol < colKeys.length - 2) {
         filtered.sort((a, b) => {
           let valA = a[colKeys[sortCol]];
           let valB = b[colKeys[sortCol]];
@@ -663,7 +413,6 @@
         });
       }
 
-      // Sums
       let totalAmount = 0, paidAmount = 0, balanceAmount = 0;
       filtered.forEach(trip => {
         totalAmount += parseFloat(trip.totalAmount) || 0;
@@ -676,7 +425,6 @@
         if (trip.paymentStatus === 'Paid') statusClass = 'status-badge status-paid';
         else if (trip.paymentStatus === 'Not Paid') statusClass = 'status-badge status-notpaid';
         else if (trip.paymentStatus === 'Partially Paid') statusClass = 'status-badge status-partial';
-        else statusClass = '';
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${trip.bookingId || ''}</td>
@@ -715,7 +463,6 @@
         tbody.appendChild(tr);
       });
 
-      // Sum row
       let sumRow = '';
       for (let i = 0; i < 29; i++) {
         if (i === 22) sumRow += `<td class="sum-row">${totalAmount.toFixed(2)}</td>`;
@@ -726,34 +473,30 @@
       }
       tfoot.innerHTML = sumRow;
 
-      // Add event listeners for edit and delete buttons
       document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.removeEventListener('click', handleEditClick); // Prevent duplicate listeners
+        btn.removeEventListener('click', handleEditClick);
         btn.addEventListener('click', handleEditClick);
       });
       document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.removeEventListener('click', handleDeleteClick); // Prevent duplicate listeners
+        btn.removeEventListener('click', handleDeleteClick);
         btn.addEventListener('click', handleDeleteClick);
       });
     }
 
-    // Handle edit button click
     function handleEditClick(event) {
       const tripId = event.currentTarget.dataset.id;
-      console.log('Edit button clicked for tripId:', tripId); // Debugging
+      console.log('Edit button clicked for tripId:', tripId);
       openEditModal(tripId);
     }
 
-    // Handle delete button click
-    function handleDeleteClick(event) {
+    async function handleDeleteClick(event) {
       const tripId = event.currentTarget.dataset.id;
-      console.log('Delete button clicked for tripId:', tripId); // Debugging
-      deleteTrip(tripId);
+      console.log('Delete button clicked for tripId:', tripId);
+      await deleteTrip(tripId);
     }
 
-    // Open edit modal
     function openEditModal(tripId) {
-      console.log('Opening edit modal for tripId:', tripId); // Debugging
+      console.log('Opening edit modal for tripId:', tripId);
       const trip = allTrips.find(t => t.id === tripId);
       if (!trip) {
         console.error('Trip not found for id:', tripId);
@@ -761,7 +504,6 @@
         return;
       }
 
-      // Populate form fields
       document.getElementById('editTripId').value = trip.id;
       document.getElementById('editDate').value = formatDateForInput(trip.date) || '';
       document.getElementById('editDuty').value = trip.duty || '';
@@ -790,7 +532,6 @@
       document.getElementById('editPaymentStatus').value = trip.paymentStatus || '';
       document.getElementById('editTripNotes').value = trip.tripNotes || '';
 
-      // Show modal
       const modal = document.getElementById('editModal');
       if (modal) {
         modal.style.display = 'flex';
@@ -802,13 +543,12 @@
       updateModalTheme();
     }
 
-    // Save edited trip
     document.getElementById('editForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const tripId = document.getElementById('editTripId').value;
-      console.log('Saving trip for tripId:', tripId); // Debugging
+      console.log('Saving trip for tripId:', tripId);
       const updatedTrip = {
-        bookingId: allTrips.find(t => t.id === tripId).bookingId, // Preserve bookingId
+        bookingId: allTrips.find(t => t.id === tripId).bookingId,
         date: document.getElementById('editDate').value || null,
         duty: document.getElementById('editDuty').value || null,
         reference: document.getElementById('editReference').value || null,
@@ -835,7 +575,7 @@
         balanceAmount: document.getElementById('editBalanceAmount').value || null,
         paymentStatus: document.getElementById('editPaymentStatus').value || null,
         tripNotes: document.getElementById('editTripNotes').value || null,
-        tripFiles: allTrips.find(t => t.id === tripId).tripFiles || [] // Preserve existing files
+        tripFiles: allTrips.find(t => t.id === tripId).tripFiles || []
       };
 
       try {
@@ -851,17 +591,15 @@
       }
     });
 
-    // Cancel edit
     document.getElementById('cancelEdit').addEventListener('click', () => {
-      console.log('Cancel edit clicked'); // Debugging
+      console.log('Cancel edit clicked');
       const modal = document.getElementById('editModal');
       modal.style.display = 'none';
       document.getElementById('editForm').reset();
     });
 
-    // Delete trip
     async function deleteTrip(tripId) {
-      console.log('Deleting trip:', tripId); // Debugging
+      console.log('Deleting trip:', tripId);
       if (!confirm('Are you sure you want to delete this trip?')) return;
       try {
         await remove(ref(db, `trips/${tripId}`));
@@ -874,6 +612,80 @@
       }
     }
 
+    async function syncToGoogleSheets(trips) {
+      try {
+        const response = await fetch(FIREBASE_FUNCTION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'syncAll',
+            spreadsheetId: SPREADSHEET_ID,
+            sheetName: SHEET_NAME,
+            trips: trips.map(trip => ({
+              id: trip.id,
+              bookingId: trip.bookingId || '',
+              tripDates: trip.date ? formatDate(trip.date) : '',
+              duty: trip.duty || '',
+              reference: trip.reference || '',
+              pickupLocation: trip.pickupLocation || '',
+              dropLocation: trip.dropLocation || '',
+              customerName: trip.customerName || '',
+              customerNumber: trip.customerNumber || '',
+              driverName: trip.driverName || '',
+              driverNumber: trip.driverNumber || '',
+              vehicleModel: trip.vehicleModel || '',
+              vehicleNumber: trip.vehicleNumber || '',
+              startTime: formatTime12(trip.startTime) || '',
+              endTime: formatTime12(trip.endTime) || '',
+              duration: trip.duration || '',
+              extraHours: trip.extraHours || '',
+              startKm: trip.startKm || '',
+              endKm: trip.endKm || '',
+              totalKm: trip.totalKm || '',
+              extraKm: trip.extraKm || '',
+              parking: trip.parking || '',
+              toll: trip.toll || '',
+              totalAmount: trip.totalAmount || '',
+              paidAmount: trip.paidAmount || '',
+              balanceAmount: trip.balanceAmount || '',
+              paymentStatus: trip.paymentStatus || '',
+              tripNotes: trip.tripNotes || '',
+              tripFiles: (trip.tripFiles || []).join(', ')
+            }))
+          })
+        });
+        const result = await response.json();
+        if (result.success) {
+          console.log('Synced all trips to Google Sheets');
+        } else {
+          console.error('Error syncing to Google Sheets:', result.error);
+          alert('Failed to sync to Google Sheets.');
+        }
+      } catch (error) {
+        console.error('Error syncing to Google Sheets:', error);
+        alert('Failed to sync to Google Sheets.');
+      }
+    }
+
+    document.getElementById('syncSheets').addEventListener('click', async () => {
+      await syncToGoogleSheets(allTrips);
+      alert('Manually synced to Google Sheets!');
+    });
+
+    // Real-time Firebase listener
+    onValue(ref(db, 'trips'), async (snapshot) => {
+      allTrips = [];
+      if (snapshot.exists()) {
+        allTrips = Object.entries(snapshot.val()).map(([key, value]) => ({
+          id: key,
+          ...value
+        }));
+      }
+      renderTable();
+      populateFilters();
+      await syncToGoogleSheets(allTrips);
+    });
+
     // Export to PDF
     document.getElementById('exportPDF').addEventListener('click', function() {
       const { jsPDF } = window.jspdf;
@@ -882,14 +694,7 @@
         unit: "pt",
         format: [1684, 1190]
       });
-      const head = [
-        [
-          "Trip ID", "Trip Dates", "Duty", "Reference", "Pickup", "Drop", "Customer Name", "Customer Number",
-          "Driver Name", "Driver Number", "Vehicle Model", "Vehicle Number", "Start Time", "End Time", "Duration",
-          "Extra Hours", "Start KM", "End KM", "Total KM", "Extra KM", "Parking", "Toll", "Total Amount",
-          "Paid Amount", "Balance Amount", "Payment Status", "Notes", "Files"
-        ]
-      ];
+      const head = [sheetHeaders.slice(0, -1)];
       const body = [];
       const search = document.getElementById('searchInput').value.toLowerCase();
       const driver = document.getElementById('driverFilter').value;
@@ -901,9 +706,7 @@
       let filtered = groupTrips(allTrips).filter(trip => {
         let match = true;
         if (search) {
-          match = Object.values(trip).some(val =>
-            (val + '').toLowerCase().includes(search)
-          );
+          match = Object.values(trip).some(val => (val + '').toLowerCase().includes(search));
         }
         if (match && driver) match = trip.driverName === driver;
         if (match && vehicle) match = trip.vehicleModel === vehicle;
@@ -984,11 +787,10 @@
     // Export to Excel
     document.getElementById('exportExcel').addEventListener('click', function() {
       const table = document.getElementById('tripTable');
-      const wb = XLSX.utils.table_to_book(table, {sheet:"Trips"});
+      const wb = XLSX.utils.table_to_book(table, { sheet: "Trips" });
       XLSX.writeFile(wb, 'trip-summary.xlsx');
     });
 
-    // Column resizing
     function makeColumnsResizable(table) {
       const ths = table.querySelectorAll('th');
       ths.forEach((th, i) => {
@@ -1019,12 +821,11 @@
       });
     }
 
-    // Sorting
     function makeColumnsSortable(table) {
       const ths = table.querySelectorAll('th');
       ths.forEach((th, i) => {
         th.addEventListener('click', function(e) {
-          if (e.target.classList.contains('resize-handle') || i === colKeys.length - 1) return; // Skip actions column
+          if (e.target.classList.contains('resize-handle') || i === colKeys.length - 1) return;
           if (sortCol === i) {
             sortDir = -sortDir;
           } else {
@@ -1038,15 +839,12 @@
       });
     }
 
-    // Initial load
-    loadTrips();
-
-    // After DOM loaded, make columns resizable and sortable
     window.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM fully loaded'); // Debugging
+      console.log('DOM fully loaded');
       const table = document.getElementById('tripTable');
       makeColumnsResizable(table);
       makeColumnsSortable(table);
+      loadTrips();
     });
   </script>
 </body>

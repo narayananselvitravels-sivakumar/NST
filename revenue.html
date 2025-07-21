@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Revenue Dashboard - NST Travels</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background-color: #f3f4f6;
+      font-weight: 600;
+      transition: background 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 98vw;
+      margin: auto;
+      padding: 2.5rem 1rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s, color 0.3s;
+    }
+    .summary-card {
+      background: #2563eb;
+      color: #fff;
+      border-radius: 1rem;
+      padding: 1.5rem 1.2rem;
+      min-width: 180px;
+      min-height: 110px;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .summary-card .label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+    .summary-card .value {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-top: 0.5rem;
+      letter-spacing: 1px;
+    }
+    .summary-card .icon {
+      font-size: 2.2rem;
+      opacity: 0.25;
+      position: absolute;
+      right: 1.2rem;
+      top: 1.2rem;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25em 0.8em;
+      border-radius: 0.5em;
+      font-weight: 700;
+      font-size: 0.98em;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .status-paid {
+      background: #22c55e;
+    }
+    .status-notpaid {
+      background: #ef4444;
+    }
+    .status-partial {
+      background: #f59e42;
+    }
+    th, td {
+      white-space: nowrap;
+      text-align: center;
+      vertical-align: middle;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #e5e7eb;
+      background: inherit;
+    }
+    th {
+      background: #2563eb;
+      color: #fff !important;
+      font-weight: 800;
+      font-size: 1.05rem;
+      border-bottom: 2px solid #1d4ed8;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      min-width: 60px;
+      height: 48px;
+    }
+    .trip-date-col {
+      min-width: 180px;
+      max-width: 260px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.5px;
+    }
+    .sum-row {
+      background: #e0e7ff;
+      font-weight: bold;
+      color: #1e40af;
+    }
+    .export-btn {
+      background: #2563eb;
+      color: #fff;
+      margin-right: 0.5rem;
+    }
+    .export-btn:hover {
+      background: #1d4ed8;
+    }
+    .search-bar {
+      max-width: 300px;
+    }
+    .filter-select {
+      min-width: 120px;
+    }
+    .mark-paid-btn {
+      background: #22c55e;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 0.4rem;
+      padding: 0.2rem 0.8rem;
+      margin: 0.1rem 0;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .mark-paid-btn:hover {
+      background: #16a34a;
+    }
+    .card-scroll {
+      overflow-x: auto;
+      display: flex;
+      gap: 1.2rem;
+      padding-bottom: 1rem;
+    }
+    /* Top Customers/Drivers always white, visible text */
+    .top-box {
+      background: #fff !important;
+      border: 1.5px solid #2563eb;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+      color: #1e293b !important;
+    }
+    #topCustomers li, #topDrivers li {
+      font-size: 1.08rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: #1e293b;
+    }
+    html.dark #topCustomers li, html.dark #topDrivers li {
+      color: #1e293b !important;
+    }
+    html.dark .top-box {
+      background: #fff !important;
+      color: #1e293b !important;
+    }
+    @media (max-width: 900px) {
+      .container {
+        padding: 1.2rem 0.2rem;
+      }
+      .summary-card {
+        min-width: 140px;
+        padding: 1rem 0.7rem;
+      }
+      .responsive-table {
+        font-size: 0.95rem;
+      }
+      .trip-date-col {
+        min-width: 140px;
+        max-width: 220px;
+        font-size: 0.98rem;
+      }
+    }
+    @media (max-width: 640px) {
+      .container {
+        padding: 0.5rem 0.1rem;
+      }
+      .summary-card {
+        min-width: 120px;
+        padding: 0.7rem 0.4rem;
+      }
+      .responsive-table {
+        font-size: 0.85rem;
+      }
+      th, td {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.5rem;
+      }
+      .trip-date-col {
+        min-width: 120px;
+        max-width: 180px;
+        font-size: 0.92rem;
+      }
+    }
+    html.dark body {
+      background: #18181b;
+      color: #f3f4f6;
+    }
+    html.dark .container {
+      background: #23232a;
+      color: #f3f4f6;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    html.dark input, html.dark select {
+      background: #18181b;
+      color: #f3f4f6;
+      border-color: #444;
+    }
+    html.dark .btn {
+      color: #fff;
+    }
+    html.dark .bg-gray-50 {
+      background: #23232a !important;
+    }
+    html.dark .bg-white {
+      background: #23232a !important;
+    }
+    html.dark .bg-gray-800 {
+      background: #18181b !important;
+    }
+    html.dark .bg-blue-600 {
+      background: #2563eb !important;
+    }
+    html.dark .text-gray-900 {
+      color: #f3f4f6 !important;
+    }
+    html.dark .footer-text {
+      color: #d1d5db;
+    }
+    html.dark .border {
+      border-color: #444 !important;
+    }
+    .footer-text {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .admin-link {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <!-- Dark Mode Toggle Button -->
+  <button id="themeToggle" class="fixed top-4 left-4 z-50 btn bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-3 py-2 rounded-md shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+    <i class="fas fa-moon"></i>
+  </button>
+
+  <div class="container max-w-7xl mx-auto py-8">
+    <a href="admin-panel.html" class="admin-link btn bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900">
+      <i class="fas fa-cog mr-2"></i> Admin Panel
+    </a>
+    <h3 class="text-3xl font-bold text-gray-900 mb-8"><i class="fas fa-chart-line mr-2"></i> Revenue Dashboard</h3>
+    <!-- Summary Cards -->
+    <div class="card-scroll mb-6" id="summaryCards"></div>
+    <!-- Date Range Filter -->
+    <div class="flex flex-wrap gap-4 mb-6 items-center">
+      <label class="font-bold">From: <input type="date" id="fromDate" class="input-field filter-select" /></label>
+      <label class="font-bold">To: <input type="date" id="toDate" class="input-field filter-select" /></label>
+      <button id="clearFilters" class="btn bg-gray-300 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-400">Clear</button>
+    </div>
+    <!-- Charts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div class="bg-white dark:bg-gray-100 rounded-lg shadow p-4">
+        <h4 class="font-bold mb-2 text-blue-700 dark:text-blue-600">Revenue Over Time</h4>
+        <canvas id="revenueOverTime"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-100 rounded-lg shadow p-4">
+        <h4 class="font-bold mb-2 text-blue-700 dark:text-blue-600">Revenue by Driver</h4>
+        <canvas id="revenueByDriver"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-100 rounded-lg shadow p-4">
+        <h4 class="font-bold mb-2 text-blue-700 dark:text-blue-600">Revenue by Vehicle</h4>
+        <canvas id="revenueByVehicle"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-100 rounded-lg shadow p-4">
+        <h4 class="font-bold mb-2 text-blue-700 dark:text-blue-600">Revenue by Duty/Type</h4>
+        <canvas id="revenueByDuty"></canvas>
+      </div>
+    </div>
+    <!-- Table Filters -->
+    <div class="flex flex-wrap gap-4 mb-6 items-center">
+      <input type="text" id="searchInput" class="input-field search-bar" placeholder="Search trips..." />
+      <select id="driverFilter" class="select-field filter-select">
+        <option value="">All Drivers</option>
+      </select>
+      <select id="vehicleFilter" class="select-field filter-select">
+        <option value="">All Vehicles</option>
+      </select>
+      <select id="paymentFilter" class="select-field filter-select">
+        <option value="">All Payments</option>
+        <option value="Paid">Paid</option>
+        <option value="Not Paid">Not Paid</option>
+        <option value="Partially Paid">Partially Paid</option>
+      </select>
+      <button id="exportPDF" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
+      <button id="exportExcel" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+    </div>
+    <!-- Table -->
+    <div class="responsive-table mb-8">
+      <table id="tripTable" class="bg-white rounded-lg shadow border">
+        <thead>
+          <tr id="tripTableHeader">
+            <th>Trip ID</th>
+            <th class="trip-date-col">Trip Dates</th>
+            <th>Duty</th>
+            <th>Customer Name</th>
+            <th>Driver Name</th>
+            <th>Vehicle Model</th>
+            <th>Total Amount</th>
+            <th>Paid Amount</th>
+            <th>Balance Amount</th>
+            <th>Payment Status</th>
+            <th>Mark Paid</th>
+          </tr>
+        </thead>
+        <tbody id="tripTableBody">
+          <!-- Data will be loaded here -->
+        </tbody>
+        <tfoot>
+          <tr id="sumRow" class="sum-row"></tr>
+        </tfoot>
+      </table>
+    </div>
+    <!-- Outstanding Payments -->
+    <div class="mb-8">
+      <h4 class="font-bold text-xl mb-2 text-red-700 dark:text-red-400"><i class="fas fa-exclamation-circle mr-2"></i> Outstanding Payments</h4>
+      <div class="responsive-table">
+        <table class="bg-white rounded-lg shadow border">
+          <thead>
+            <tr>
+              <th>Trip ID</th>
+              <th>Trip Dates</th>
+              <th>Customer Name</th>
+              <th>Driver Name</th>
+              <th>Vehicle Model</th>
+              <th>Total Amount</th>
+              <th>Paid Amount</th>
+              <th>Balance Amount</th>
+              <th>Payment Status</th>
+              <th>Mark Paid</th>
+            </tr>
+          </thead>
+          <tbody id="outstandingTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Top Customers/Drivers -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div class="top-box p-4">
+        <h4 class="font-bold mb-2 text-blue-700">Top Customers</h4>
+        <ul id="topCustomers" class="list-disc pl-6"></ul>
+      </div>
+      <div class="top-box p-4">
+        <h4 class="font-bold mb-2 text-blue-700">Top Drivers</h4>
+        <ul id="topDrivers" class="list-disc pl-6"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-6 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="footer-text">© 2025 NST Travels. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- (The script section is the same as in the previous full code, no changes needed for the top box fix) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, child, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz2rGDr0iREns6Rg6r1z5EHE3qhLDnEzs",
+      authDomain: "narayananselvitravels-26dcb.firebaseapp.com",
+      databaseURL: "https://narayananselvitravels-26dcb-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "narayananselvitravels-26dcb",
+      storageBucket: "narayananselvitravels-26dcb.appspot.com",
+      messagingSenderId: "395599682835",
+      appId: "1:395599682835:web:9d46e03ca14aa0738dcee6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db);
+
+    let allTrips = [];
+    let filteredTrips = [];
+    let sortCol = null;
+    let sortDir = 1; // 1 = asc, -1 = desc
+
+    // Dark Mode Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+    function updateThemeIcon() {
+      if (htmlEl.classList.contains('dark')) {
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+      } else {
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+      }
+    }
+    if (localStorage.getItem('theme') === 'dark' ||
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.add('dark');
+    } else {
+      htmlEl.classList.remove('dark');
+    }
+    updateThemeIcon();
+    themeToggle.addEventListener('click', () => {
+      htmlEl.classList.toggle('dark');
+      localStorage.setItem('theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
+      updateThemeIcon();
+    });
+
+    // Helper: format date as DD-MM-YYYY
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    // Helper: format time as 12-hour
+    function formatTime12(timeStr) {
+      if (!timeStr) return '';
+      const [h, m] = timeStr.split(':');
+      let hour = parseInt(h, 10);
+      const min = m ? m.padStart(2, '0') : '00';
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      hour = hour % 12;
+      if (hour === 0) hour = 12;
+      return `${hour}:${min} ${ampm}`;
+    }
+
+    // Group trips by bookingId for package trips
+    function groupTrips(trips) {
+      const grouped = {};
+      trips.forEach(trip => {
+        if (!grouped[trip.bookingId]) grouped[trip.bookingId] = [];
+        grouped[trip.bookingId].push(trip);
+      });
+      // For each group, return a single summary row
+      return Object.values(grouped).map(group => {
+        // If only one trip, just return it
+        if (group.length === 1) {
+          const t = group[0];
+          let tripDateCol = t.date ? formatDate(t.date) : '';
+          return { ...t, tripDates: tripDateCol };
+        }
+        // For package trip, get min/max date, and merge other fields from the first trip
+        const dates = group.map(t => t.date).sort();
+        const t = group[0];
+        let tripDateCol = '';
+        if (dates.length > 1) {
+          tripDateCol = `${formatDate(dates[0])} to ${formatDate(dates[dates.length - 1])}`;
+        } else {
+          tripDateCol = dates[0] ? formatDate(dates[0]) : '';
+        }
+        // For notes/files, merge all unique
+        const allNotes = Array.from(new Set(group.map(t => t.tripNotes).filter(Boolean))).join(' | ');
+        const allFiles = Array.from(new Set(group.flatMap(t => t.tripFiles || [])));
+        // For sums, only use the first trip's amounts (since package is one row)
+        return {
+          ...t,
+          tripDates: tripDateCol,
+          tripNotes: allNotes,
+          tripFiles: allFiles
+        };
+      });
+    }
+
+    // Load trips from Firebase
+    async function loadTrips() {
+      const snap = await get(child(dbRef, 'trips'));
+      allTrips = [];
+      if (snap.exists()) {
+        allTrips = Object.values(snap.val());
+      }
+      renderAll();
+    }
+
+    // Populate driver and vehicle filters
+    function populateFilters(trips) {
+      const driverSet = new Set();
+      const vehicleSet = new Set();
+      trips.forEach(trip => {
+        if (trip.driverName) driverSet.add(trip.driverName);
+        if (trip.vehicleModel) vehicleSet.add(trip.vehicleModel);
+      });
+      const driverFilter = document.getElementById('driverFilter');
+      const vehicleFilter = document.getElementById('vehicleFilter');
+      driverFilter.innerHTML = '<option value="">All Drivers</option>';
+      vehicleFilter.innerHTML = '<option value="">All Vehicles</option>';
+      Array.from(driverSet).sort().forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        driverFilter.appendChild(opt);
+      });
+      Array.from(vehicleSet).sort().forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        vehicleFilter.appendChild(opt);
+      });
+    }
+
+    // Render all dashboard sections
+    function renderAll() {
+      // Date range filter
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+      let trips = allTrips;
+      if (fromDate) trips = trips.filter(t => t.date >= fromDate);
+      if (toDate) trips = trips.filter(t => t.date <= toDate);
+
+      // Grouped for package trips
+      filteredTrips = groupTrips(trips);
+
+      renderSummaryCards(filteredTrips);
+      renderCharts(filteredTrips);
+      renderTable(filteredTrips);
+      renderOutstanding(filteredTrips);
+      renderTopCustomersDrivers(filteredTrips);
+      populateFilters(filteredTrips);
+    }
+
+    // Render summary cards
+    function renderSummaryCards(trips) {
+      let totalRevenue = 0, totalPaid = 0, totalOutstanding = 0, numTrips = 0, numPackages = 0;
+      const customerSet = new Set();
+      trips.forEach(trip => {
+        totalRevenue += parseFloat(trip.totalAmount) || 0;
+        totalPaid += parseFloat(trip.paidAmount) || 0;
+        totalOutstanding += parseFloat(trip.balanceAmount) || 0;
+        numTrips++;
+        if (trip.isPackage) numPackages++;
+        if (trip.customerNumber) customerSet.add(trip.customerNumber);
+      });
+      const summaryCards = document.getElementById('summaryCards');
+      summaryCards.innerHTML = `
+        <div class="summary-card relative">
+          <span class="label">Total Revenue</span>
+          <span class="value">₹${totalRevenue.toLocaleString()}</span>
+          <span class="icon"><i class="fas fa-rupee-sign"></i></span>
+        </div>
+        <div class="summary-card relative">
+          <span class="label">Total Paid</span>
+          <span class="value">₹${totalPaid.toLocaleString()}</span>
+          <span class="icon"><i class="fas fa-check-circle"></i></span>
+        </div>
+        <div class="summary-card relative">
+          <span class="label">Outstanding</span>
+          <span class="value">₹${totalOutstanding.toLocaleString()}</span>
+          <span class="icon"><i class="fas fa-exclamation-circle"></i></span>
+        </div>
+        <div class="summary-card relative">
+          <span class="label">Trips</span>
+          <span class="value">${numTrips}</span>
+          <span class="icon"><i class="fas fa-road"></i></span>
+        </div>
+        <div class="summary-card relative">
+          <span class="label">Package Trips</span>
+          <span class="value">${numPackages}</span>
+          <span class="icon"><i class="fas fa-box"></i></span>
+        </div>
+        <div class="summary-card relative">
+          <span class="label">Unique Customers</span>
+          <span class="value">${customerSet.size}</span>
+          <span class="icon"><i class="fas fa-users"></i></span>
+        </div>
+      `;
+    }
+
+    // Render charts
+    let chart1, chart2, chart3, chart4;
+    function renderCharts(trips) {
+      // Revenue Over Time
+      const dateMap = {};
+      trips.forEach(trip => {
+        let d = trip.date;
+        if (!d) return;
+        if (!dateMap[d]) dateMap[d] = 0;
+        dateMap[d] += parseFloat(trip.totalAmount) || 0;
+      });
+      const dates = Object.keys(dateMap).sort();
+      const revenues = dates.map(d => dateMap[d]);
+
+      // Revenue by Driver
+      const driverMap = {};
+      trips.forEach(trip => {
+        let d = trip.driverName || "Unknown";
+        if (!driverMap[d]) driverMap[d] = 0;
+        driverMap[d] += parseFloat(trip.totalAmount) || 0;
+      });
+      const driverNames = Object.keys(driverMap);
+      const driverRevenues = driverNames.map(d => driverMap[d]);
+
+      // Revenue by Vehicle
+      const vehicleMap = {};
+      trips.forEach(trip => {
+        let v = trip.vehicleModel || "Unknown";
+        if (!vehicleMap[v]) vehicleMap[v] = 0;
+        vehicleMap[v] += parseFloat(trip.totalAmount) || 0;
+      });
+      const vehicleNames = Object.keys(vehicleMap);
+      const vehicleRevenues = vehicleNames.map(v => vehicleMap[v]);
+
+      // Revenue by Duty/Type
+      const dutyMap = {};
+      trips.forEach(trip => {
+        let d = trip.duty || "Unknown";
+        if (!dutyMap[d]) dutyMap[d] = 0;
+        dutyMap[d] += parseFloat(trip.totalAmount) || 0;
+      });
+      const dutyNames = Object.keys(dutyMap);
+      const dutyRevenues = dutyNames.map(d => dutyMap[d]);
+
+      // Destroy old charts if exist
+      if (chart1) chart1.destroy();
+      if (chart2) chart2.destroy();
+      if (chart3) chart3.destroy();
+      if (chart4) chart4.destroy();
+
+      // Chart 1: Revenue Over Time
+      chart1 = new Chart(document.getElementById('revenueOverTime').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: dates.map(formatDate),
+          datasets: [{
+            label: 'Revenue',
+            data: revenues,
+            backgroundColor: '#2563eb'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Date' } }, y: { title: { display: true, text: '₹' } } }
+        }
+      });
+
+      // Chart 2: Revenue by Driver
+      chart2 = new Chart(document.getElementById('revenueByDriver').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: driverNames,
+          datasets: [{
+            label: 'Revenue',
+            data: driverRevenues,
+            backgroundColor: '#22c55e'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Driver' } }, y: { title: { display: true, text: '₹' } } }
+        }
+      });
+
+      // Chart 3: Revenue by Vehicle
+      chart3 = new Chart(document.getElementById('revenueByVehicle').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: vehicleNames,
+          datasets: [{
+            label: 'Revenue',
+            data: vehicleRevenues,
+            backgroundColor: '#f59e42'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Vehicle' } }, y: { title: { display: true, text: '₹' } } }
+        }
+      });
+
+      // Chart 4: Revenue by Duty/Type
+      chart4 = new Chart(document.getElementById('revenueByDuty').getContext('2d'), {
+        type: 'pie',
+        data: {
+          labels: dutyNames,
+          datasets: [{
+            label: 'Revenue',
+            data: dutyRevenues,
+            backgroundColor: [
+              '#2563eb', '#22c55e', '#f59e42', '#ef4444', '#a21caf', '#0ea5e9', '#fbbf24', '#14b8a6'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // Render main table and sum row
+    function renderTable(trips) {
+      const tbody = document.getElementById('tripTableBody');
+      const tfoot = document.getElementById('sumRow');
+      tbody.innerHTML = '';
+      tfoot.innerHTML = '';
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const driver = document.getElementById('driverFilter').value;
+      const vehicle = document.getElementById('vehicleFilter').value;
+      const payment = document.getElementById('paymentFilter').value;
+
+      let filtered = trips.filter(trip => {
+        let match = true;
+        if (search) {
+          match = [trip.bookingId, trip.tripDates, trip.duty, trip.customerName, trip.driverName, trip.vehicleModel, trip.paymentStatus]
+            .some(val => (val + '').toLowerCase().includes(search));
+        }
+        if (match && driver) match = trip.driverName === driver;
+        if (match && vehicle) match = trip.vehicleModel === vehicle;
+        if (match && payment) match = trip.paymentStatus === payment;
+        return match;
+      });
+
+      // Sums
+      let totalAmount = 0, paidAmount = 0, balanceAmount = 0;
+      filtered.forEach(trip => {
+        totalAmount += parseFloat(trip.totalAmount) || 0;
+        paidAmount += parseFloat(trip.paidAmount) || 0;
+        balanceAmount += parseFloat(trip.balanceAmount) || 0;
+      });
+
+      filtered.forEach(trip => {
+        let statusClass = '';
+        if (trip.paymentStatus === 'Paid') statusClass = 'status-badge status-paid';
+        else if (trip.paymentStatus === 'Not Paid') statusClass = 'status-badge status-notpaid';
+        else if (trip.paymentStatus === 'Partially Paid') statusClass = 'status-badge status-partial';
+        else statusClass = '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${trip.bookingId || ''}</td>
+          <td class="trip-date-col">${trip.tripDates}</td>
+          <td>${trip.duty || ''}</td>
+          <td>${trip.customerName || ''}</td>
+          <td>${trip.driverName || ''}</td>
+          <td>${trip.vehicleModel || ''}</td>
+          <td>${trip.totalAmount || ''}</td>
+          <td>${trip.paidAmount || ''}</td>
+          <td>${trip.balanceAmount || ''}</td>
+          <td><span class="${statusClass}">${trip.paymentStatus || ''}</span></td>
+          <td>${(trip.paymentStatus !== 'Paid' && trip.bookingId) ? `<button class="mark-paid-btn" data-id="${trip.bookingId}">Mark Paid</button>` : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Sum row
+      tfoot.innerHTML = `
+        <td class="sum-row" colspan="6" style="text-align:right;">Total</td>
+        <td class="sum-row">₹${totalAmount.toFixed(2)}</td>
+        <td class="sum-row">₹${paidAmount.toFixed(2)}</td>
+        <td class="sum-row">₹${balanceAmount.toFixed(2)}</td>
+        <td class="sum-row" colspan="2"></td>
+      `;
+
+      // Mark as Paid
+      tbody.querySelectorAll('.mark-paid-btn').forEach(btn => {
+        btn.onclick = async function() {
+          const bookingId = this.getAttribute('data-id');
+          // Find all trip keys for this bookingId
+          const snap = await get(child(dbRef, 'trips'));
+          if (snap.exists()) {
+            const data = snap.val();
+            const updates = {};
+            Object.entries(data).forEach(([key, trip]) => {
+              if (trip.bookingId === bookingId) {
+                updates[`trips/${key}/paymentStatus`] = "Paid";
+                updates[`trips/${key}/paidAmount`] = trip.totalAmount || "0";
+                updates[`trips/${key}/balanceAmount`] = "0";
+              }
+            });
+            await update(dbRef, updates);
+            alert("Marked as Paid!");
+            await loadTrips();
+          }
+        };
+      });
+    }
+
+    // Render outstanding payments
+    function renderOutstanding(trips) {
+      const tbody = document.getElementById('outstandingTableBody');
+      tbody.innerHTML = '';
+      const outstanding = trips.filter(trip => (parseFloat(trip.balanceAmount) || 0) > 0);
+      outstanding.forEach(trip => {
+        let statusClass = '';
+        if (trip.paymentStatus === 'Paid') statusClass = 'status-badge status-paid';
+        else if (trip.paymentStatus === 'Not Paid') statusClass = 'status-badge status-notpaid';
+        else if (trip.paymentStatus === 'Partially Paid') statusClass = 'status-badge status-partial';
+        else statusClass = '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${trip.bookingId || ''}</td>
+          <td class="trip-date-col">${trip.tripDates}</td>
+          <td>${trip.customerName || ''}</td>
+          <td>${trip.driverName || ''}</td>
+          <td>${trip.vehicleModel || ''}</td>
+          <td>${trip.totalAmount || ''}</td>
+          <td>${trip.paidAmount || ''}</td>
+          <td>${trip.balanceAmount || ''}</td>
+          <td><span class="${statusClass}">${trip.paymentStatus || ''}</span></td>
+          <td>${(trip.paymentStatus !== 'Paid' && trip.bookingId) ? `<button class="mark-paid-btn" data-id="${trip.bookingId}">Mark Paid</button>` : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Mark as Paid
+      tbody.querySelectorAll('.mark-paid-btn').forEach(btn => {
+        btn.onclick = async function() {
+          const bookingId = this.getAttribute('data-id');
+          const snap = await get(child(dbRef, 'trips'));
+          if (snap.exists()) {
+            const data = snap.val();
+            const updates = {};
+            Object.entries(data).forEach(([key, trip]) => {
+              if (trip.bookingId === bookingId) {
+                updates[`trips/${key}/paymentStatus`] = "Paid";
+                updates[`trips/${key}/paidAmount`] = trip.totalAmount || "0";
+                updates[`trips/${key}/balanceAmount`] = "0";
+              }
+            });
+            await update(dbRef, updates);
+            alert("Marked as Paid!");
+            await loadTrips();
+          }
+        };
+      });
+    }
+
+    // Render top customers and drivers
+    function renderTopCustomersDrivers(trips) {
+      // Top Customers
+      const customerMap = {};
+      trips.forEach(trip => {
+        let c = trip.customerName || "Unknown";
+        if (!customerMap[c]) customerMap[c] = 0;
+        customerMap[c] += parseFloat(trip.totalAmount) || 0;
+      });
+      const topCustomers = Object.entries(customerMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      const ulC = document.getElementById('topCustomers');
+      ulC.innerHTML = topCustomers.map(([name, amt]) => `<li>${name}: ₹${amt.toLocaleString()}</li>`).join('');
+
+      // Top Drivers
+      const driverMap = {};
+      trips.forEach(trip => {
+        let d = trip.driverName || "Unknown";
+        if (!driverMap[d]) driverMap[d] = 0;
+        driverMap[d] += parseFloat(trip.totalAmount) || 0;
+      });
+      const topDrivers = Object.entries(driverMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      const ulD = document.getElementById('topDrivers');
+      ulD.innerHTML = topDrivers.map(([name, amt]) => `<li>${name}: ₹${amt.toLocaleString()}</li>`).join('');
+    }
+
+    // Export to PDF (jsPDF-AutoTable, wide A2 page, centered, better spacing, sum row)
+    document.getElementById('exportPDF').addEventListener('click', function() {
+      const { jsPDF } = window.jspdf;
+      // A2 landscape: 1684pt x 1190pt
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "pt",
+        format: [1684, 1190]
+      });
+      const head = [
+        [
+          "Trip ID", "Trip Dates", "Duty", "Customer Name", "Driver Name", "Vehicle Model",
+          "Total Amount", "Paid Amount", "Balance Amount", "Payment Status"
+        ]
+      ];
+      const body = [];
+      let totalAmount = 0, paidAmount = 0, balanceAmount = 0;
+      filteredTrips.forEach(trip => {
+        totalAmount += parseFloat(trip.totalAmount) || 0;
+        paidAmount += parseFloat(trip.paidAmount) || 0;
+        balanceAmount += parseFloat(trip.balanceAmount) || 0;
+        body.push([
+          trip.bookingId || '',
+          trip.tripDates,
+          trip.duty || '',
+          trip.customerName || '',
+          trip.driverName || '',
+          trip.vehicleModel || '',
+          trip.totalAmount || '',
+          trip.paidAmount || '',
+          trip.balanceAmount || '',
+          trip.paymentStatus || ''
+        ]);
+      });
+      // Add sum row
+      let sumRow = [];
+      for (let i = 0; i < 10; i++) {
+        if (i === 6) sumRow.push(totalAmount.toFixed(2));
+        else if (i === 7) sumRow.push(paidAmount.toFixed(2));
+        else if (i === 8) sumRow.push(balanceAmount.toFixed(2));
+        else if (i === 0) sumRow.push("Total");
+        else sumRow.push("");
+      }
+      body.push(sumRow);
+
+      doc.autoTable({
+        head: head,
+        body: body,
+        startY: 40,
+        styles: { font: "helvetica", fontSize: 12, cellPadding: 5, halign: 'center', valign: 'middle' },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 10, right: 10 },
+        theme: 'grid',
+        didDrawPage: function (data) {
+          doc.setFontSize(18);
+          doc.setTextColor(40);
+          doc.text("Trip Revenue - NST Travels", data.settings.margin.left + 20, 28, { align: 'left' });
+        }
+      });
+      doc.save('revenue-summary.pdf');
+    });
+
+    // Export to Excel
+    document.getElementById('exportExcel').addEventListener('click', function() {
+      // Only export the main table (not outstanding)
+      const table = document.getElementById('tripTable');
+      const wb = XLSX.utils.table_to_book(table, {sheet:"Revenue"});
+      XLSX.writeFile(wb, 'revenue-summary.xlsx');
+    });
+
+    // Date range filter and clear
+    document.getElementById('fromDate').addEventListener('change', renderAll);
+    document.getElementById('toDate').addEventListener('change', renderAll);
+    document.getElementById('clearFilters').addEventListener('click', function() {
+      document.getElementById('fromDate').value = '';
+      document.getElementById('toDate').value = '';
+      renderAll();
+    });
+
+    // Table search/filter
+    document.getElementById('searchInput').addEventListener('input', renderAll);
+    document.getElementById('driverFilter').addEventListener('change', renderAll);
+    document.getElementById('vehicleFilter').addEventListener('change', renderAll);
+    document.getElementById('paymentFilter').addEventListener('change', renderAll);
+
+    // Initial load
+    loadTrips();
+  </script>
+</body>
+</html>

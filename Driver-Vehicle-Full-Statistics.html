@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver & Vehicle Full Statistics - NST Travels</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background-color: #f3f4f6;
+      font-weight: 600;
+      transition: background 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 98vw;
+      margin: auto;
+      padding: 2.5rem 1rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s, color 0.3s;
+    }
+    .summary-card {
+      background: #2563eb;
+      color: #fff;
+      border-radius: 1rem;
+      padding: 1.5rem 1.2rem;
+      min-width: 180px;
+      min-height: 110px;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .summary-card .label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+    .summary-card .value {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-top: 0.5rem;
+      letter-spacing: 1px;
+    }
+    .summary-card .icon {
+      font-size: 2.2rem;
+      opacity: 0.25;
+      position: absolute;
+      right: 1.2rem;
+      top: 1.2rem;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25em 0.8em;
+      border-radius: 0.5em;
+      font-weight: 700;
+      font-size: 0.98em;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .status-paid {
+      background: #22c55e;
+    }
+    .status-notpaid {
+      background: #ef4444;
+    }
+    .status-partial {
+      background: #f59e42;
+    }
+    th, td {
+      white-space: nowrap;
+      text-align: center;
+      vertical-align: middle;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #e5e7eb;
+      background: inherit;
+    }
+    th {
+      background: #2563eb;
+      color: #fff !important;
+      font-weight: 800;
+      font-size: 1.05rem;
+      border-bottom: 2px solid #1d4ed8;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      min-width: 60px;
+      height: 48px;
+    }
+    .sum-row {
+      background: #e0e7ff;
+      font-weight: bold;
+      color: #1e40af;
+    }
+    .export-btn {
+      background: #2563eb;
+      color: #fff;
+      margin-right: 0.5rem;
+    }
+    .export-btn:hover {
+      background: #1d4ed8;
+    }
+    .search-bar {
+      max-width: 300px;
+    }
+    .filter-select {
+      min-width: 120px;
+    }
+    .mark-paid-btn {
+      background: #22c55e;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 0.4rem;
+      padding: 0.2rem 0.8rem;
+      margin: 0.1rem 0;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .mark-paid-btn:hover {
+      background: #16a34a;
+    }
+    .card-scroll {
+      overflow-x: auto;
+      display: flex;
+      gap: 1.2rem;
+      padding-bottom: 1rem;
+    }
+    .top-box {
+      background: #fff !important;
+      border: 1.5px solid #2563eb;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+      color: #1e293b !important;
+    }
+    #topDrivers li, #topVehicles li {
+      font-size: 1.08rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: #1e293b;
+    }
+    html.dark #topDrivers li, html.dark #topVehicles li {
+      color: #1e293b !important;
+    }
+    html.dark .top-box {
+      background: #fff !important;
+      color: #1e293b !important;
+    }
+    @media (max-width: 900px) {
+      .container {
+        padding: 1.2rem 0.2rem;
+      }
+      .summary-card {
+        min-width: 140px;
+        padding: 1rem 0.7rem;
+      }
+      .responsive-table {
+        font-size: 0.95rem;
+      }
+    }
+    @media (max-width: 640px) {
+      .container {
+        padding: 0.5rem 0.1rem;
+      }
+      .summary-card {
+        min-width: 120px;
+        padding: 0.7rem 0.4rem;
+      }
+      .responsive-table {
+        font-size: 0.85rem;
+      }
+      th, td {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.5rem;
+      }
+    }
+    html.dark body {
+      background: #18181b;
+      color: #f3f4f6;
+    }
+    html.dark .container {
+      background: #23232a;
+      color: #f3f4f6;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    html.dark input, html.dark select {
+      background: #18181b;
+      color: #f3f4f6;
+      border-color: #444;
+    }
+    html.dark .btn {
+      color: #fff;
+    }
+    html.dark .bg-gray-50 {
+      background: #23232a !important;
+    }
+    html.dark .bg-white {
+      background: #23232a !important;
+    }
+    html.dark .bg-gray-800 {
+      background: #18181b !important;
+    }
+    html.dark .bg-blue-600 {
+      background: #2563eb !important;
+    }
+    html.dark .text-gray-900 {
+      color: #f3f4f6 !important;
+    }
+    html.dark .footer-text {
+      color: #d1d5db;
+    }
+    html.dark .border {
+      border-color: #444 !important;
+    }
+    .footer-text {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .admin-link {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <!-- Dark Mode Toggle Button -->
+  <button id="themeToggle" class="fixed top-4 left-4 z-50 btn bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-3 py-2 rounded-md shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+    <i class="fas fa-moon"></i>
+  </button>
+
+  <div class="container max-w-7xl mx-auto py-8">
+    <a href="admin-panel.html" class="admin-link btn bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900">
+      <i class="fas fa-cog mr-2"></i> Admin Panel
+    </a>
+    <h3 class="text-3xl font-bold text-gray-900 mb-8"><i class="fas fa-chart-bar mr-2"></i> Driver & Vehicle Full Statistics</h3>
+    <!-- Date Range Filter -->
+    <div class="flex flex-wrap gap-4 mb-6 items-center">
+      <label class="font-bold">From: <input type="date" id="fromDate" class="input-field filter-select" /></label>
+      <label class="font-bold">To: <input type="date" id="toDate" class="input-field filter-select" /></label>
+      <button id="clearFilters" class="btn bg-gray-300 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-400">Clear</button>
+    </div>
+    <!-- Summary Cards -->
+    <div class="card-scroll mb-6" id="summaryCards"></div>
+    <!-- Charts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div class="bg-white dark:bg-gray-100 rounded-lg shadow p-4">
+        <h4 class="font-bold mb-2 text-blue-700 dark:text-blue-600">Trips by Driver</h4>
+        <canvas id="tripsByDriver"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-100 rounded-lg shadow p-4">
+        <h4 class="font-bold mb-2 text-blue-700 dark:text-blue-600">Revenue by Driver</h4>
+        <canvas id="revenueByDriver"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-100 rounded-lg shadow p-4">
+        <h4 class="font-bold mb-2 text-blue-700 dark:text-blue-600">Trips by Vehicle</h4>
+        <canvas id="tripsByVehicle"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-100 rounded-lg shadow p-4">
+        <h4 class="font-bold mb-2 text-blue-700 dark:text-blue-600">Revenue by Vehicle</h4>
+        <canvas id="revenueByVehicle"></canvas>
+      </div>
+    </div>
+    <!-- Driver Table -->
+    <div class="mb-8">
+      <h4 class="font-bold text-xl mb-2 text-blue-700">Driver Statistics</h4>
+      <div class="responsive-table">
+        <table id="driverTable" class="bg-white rounded-lg shadow border">
+          <thead>
+            <tr>
+              <th>Driver Name</th>
+              <th>Total Trips</th>
+              <th>Total Revenue</th>
+              <th>Total Paid</th>
+              <th>Total Outstanding</th>
+              <th>Total KM</th>
+              <th>Avg Trip Amount</th>
+              <th>Avg KM/Trip</th>
+              <th>Package Trips</th>
+              <th>Outstanding Trips</th>
+              <th>Top Vehicle</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="driverTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Vehicle Table -->
+    <div class="mb-8">
+      <h4 class="font-bold text-xl mb-2 text-blue-700">Vehicle Statistics</h4>
+      <div class="responsive-table">
+        <table id="vehicleTable" class="bg-white rounded-lg shadow border">
+          <thead>
+            <tr>
+              <th>Vehicle Model</th>
+              <th>Total Trips</th>
+              <th>Total Revenue</th>
+              <th>Total Paid</th>
+              <th>Total Outstanding</th>
+              <th>Total KM</th>
+              <th>Avg Trip Amount</th>
+              <th>Avg KM/Trip</th>
+              <th>Package Trips</th>
+              <th>Outstanding Trips</th>
+              <th>Top Driver</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="vehicleTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Driver-Vehicle Matrix Table -->
+    <div class="mb-8">
+      <h4 class="font-bold text-xl mb-2 text-blue-700">Driver-Vehicle Matrix (Trips Count)</h4>
+      <div class="responsive-table">
+        <table id="matrixTable" class="bg-white rounded-lg shadow border">
+          <thead id="matrixTableHead"></thead>
+          <tbody id="matrixTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Top Drivers/Vehicles -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div class="top-box p-4">
+        <h4 class="font-bold mb-2 text-blue-700">Top Drivers</h4>
+        <ul id="topDrivers" class="list-disc pl-6"></ul>
+      </div>
+      <div class="top-box p-4">
+        <h4 class="font-bold mb-2 text-blue-700">Top Vehicles</h4>
+        <ul id="topVehicles" class="list-disc pl-6"></ul>
+      </div>
+    </div>
+    <!-- Detailed Trip List -->
+    <div class="mb-8" id="detailsSection" style="display:none;">
+      <h4 class="font-bold text-xl mb-2 text-blue-700" id="detailsTitle"></h4>
+      <div class="responsive-table">
+        <table class="bg-white rounded-lg shadow border">
+          <thead>
+            <tr>
+              <th>Trip ID</th>
+              <th>Date(s)</th>
+              <th>Duty</th>
+              <th>Customer</th>
+              <th>Driver</th>
+              <th>Vehicle</th>
+              <th>Total Amount</th>
+              <th>Paid</th>
+              <th>Balance</th>
+              <th>Status</th>
+              <th>Mark Paid</th>
+            </tr>
+          </thead>
+          <tbody id="detailsTableBody"></tbody>
+        </table>
+      </div>
+      <button id="closeDetails" class="btn bg-gray-300 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-400 mt-4">Close</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-6 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="footer-text">© 2025 NST Travels. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, child, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz2rGDr0iREns6Rg6r1z5EHE3qhLDnEzs",
+      authDomain: "narayananselvitravels-26dcb.firebaseapp.com",
+      databaseURL: "https://narayananselvitravels-26dcb-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "narayananselvitravels-26dcb",
+      storageBucket: "narayananselvitravels-26dcb.appspot.com",
+      messagingSenderId: "395599682835",
+      appId: "1:395599682835:web:9d46e03ca14aa0738dcee6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db);
+
+    let allTrips = [];
+    let filteredTrips = [];
+    let sortCol = null;
+    let sortDir = 1; // 1 = asc, -1 = desc
+
+    // Dark Mode Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+    function updateThemeIcon() {
+      if (htmlEl.classList.contains('dark')) {
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+      } else {
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+      }
+    }
+    if (localStorage.getItem('theme') === 'dark' ||
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.add('dark');
+    } else {
+      htmlEl.classList.remove('dark');
+    }
+    updateThemeIcon();
+    themeToggle.addEventListener('click', () => {
+      htmlEl.classList.toggle('dark');
+      localStorage.setItem('theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
+      updateThemeIcon();
+    });
+
+    // Helper: format date as DD-MM-YYYY
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    // Helper: format time as 12-hour
+    function formatTime12(timeStr) {
+      if (!timeStr) return '';
+      const [h, m] = timeStr.split(':');
+      let hour = parseInt(h, 10);
+      const min = m ? m.padStart(2, '0') : '00';
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      hour = hour % 12;
+      if (hour === 0) hour = 12;
+      return `${hour}:${min} ${ampm}`;
+    }
+
+    // Group trips by bookingId for package trips
+    function groupTrips(trips) {
+      const grouped = {};
+      trips.forEach(trip => {
+        if (!grouped[trip.bookingId]) grouped[trip.bookingId] = [];
+        grouped[trip.bookingId].push(trip);
+      });
+      // For each group, return a single summary row
+      return Object.values(grouped).map(group => {
+        // If only one trip, just return it
+        if (group.length === 1) {
+          const t = group[0];
+          let tripDateCol = t.date ? formatDate(t.date) : '';
+          return { ...t, tripDates: tripDateCol };
+        }
+        // For package trip, get min/max date, and merge other fields from the first trip
+        const dates = group.map(t => t.date).sort();
+        const t = group[0];
+        let tripDateCol = '';
+        if (dates.length > 1) {
+          tripDateCol = `${formatDate(dates[0])} to ${formatDate(dates[dates.length - 1])}`;
+        } else {
+          tripDateCol = dates[0] ? formatDate(dates[0]) : '';
+        }
+        // For notes/files, merge all unique
+        const allNotes = Array.from(new Set(group.map(t => t.tripNotes).filter(Boolean))).join(' | ');
+        const allFiles = Array.from(new Set(group.flatMap(t => t.tripFiles || [])));
+        // For sums, only use the first trip's amounts (since package is one row)
+        return {
+          ...t,
+          tripDates: tripDateCol,
+          tripNotes: allNotes,
+          tripFiles: allFiles
+        };
+      });
+    }
+
+    // Load trips from Firebase
+    async function loadTrips() {
+      const snap = await get(child(dbRef, 'trips'));
+      allTrips = [];
+      if (snap.exists()) {
+        allTrips = Object.values(snap.val());
+      }
+      renderAll();
+    }
+
+    // Render all dashboard sections
+    function renderAll() {
+      // Date range filter
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+      let trips = allTrips;
+      if (fromDate) trips = trips.filter(t => t.date >= fromDate);
+      if (toDate) trips = trips.filter(t => t.date <= toDate);
+
+      // Grouped for package trips
+      filteredTrips = groupTrips(trips);
+
+      renderSummaryCards(filteredTrips);
+      renderDriverCharts(filteredTrips);
+      renderVehicleCharts(filteredTrips);
+      renderDriverTable(filteredTrips);
+      renderVehicleTable(filteredTrips);
+      renderMatrixTable(filteredTrips);
+      renderTopDriversVehicles(filteredTrips);
+    }
+
+    // Render summary cards
+    function renderSummaryCards(trips) {
+      // Driver summary
+      const driverMap = {};
+      trips.forEach(trip => {
+        let d = trip.driverName || "Unknown";
+        if (!driverMap[d]) driverMap[d] = { revenue: 0, trips: 0 };
+        driverMap[d].revenue += parseFloat(trip.totalAmount) || 0;
+        driverMap[d].trips++;
+      });
+      // Vehicle summary
+      const vehicleMap = {};
+      trips.forEach(trip => {
+        let v = trip.vehicleModel || "Unknown";
+        if (!vehicleMap[v]) vehicleMap[v] = { revenue: 0, trips: 0 };
+        vehicleMap[v].revenue += parseFloat(trip.totalAmount) || 0;
+        vehicleMap[v].trips++;
+      });
+      const summaryCards = document.getElementById('summaryCards');
+      summaryCards.innerHTML = `
+        <div class="summary-card relative">
+          <span class="label">Total Drivers</span>
+          <span class="value">${Object.keys(driverMap).length}</span>
+          <span class="icon"><i class="fas fa-user-tie"></i></span>
+        </div>
+        <div class="summary-card relative">
+          <span class="label">Total Vehicles</span>
+          <span class="value">${Object.keys(vehicleMap).length}</span>
+          <span class="icon"><i class="fas fa-car"></i></span>
+        </div>
+        <div class="summary-card relative">
+          <span class="label">Total Trips</span>
+          <span class="value">${trips.length}</span>
+          <span class="icon"><i class="fas fa-road"></i></span>
+        </div>
+        <div class="summary-card relative">
+          <span class="label">Total Revenue</span>
+          <span class="value">₹${trips.reduce((a, t) => a + (parseFloat(t.totalAmount) || 0), 0).toLocaleString()}</span>
+          <span class="icon"><i class="fas fa-rupee-sign"></i></span>
+        </div>
+      `;
+    }
+
+    // Render driver charts
+    let chartTripsByDriver, chartRevenueByDriver;
+    function renderDriverCharts(trips) {
+      // Trips by Driver
+      const driverMap = {};
+      trips.forEach(trip => {
+        let d = trip.driverName || "Unknown";
+        if (!driverMap[d]) driverMap[d] = { revenue: 0, trips: 0, km: 0 };
+        driverMap[d].revenue += parseFloat(trip.totalAmount) || 0;
+        driverMap[d].trips++;
+        driverMap[d].km += parseFloat(trip.totalKm) || 0;
+      });
+      const driverNames = Object.keys(driverMap);
+      const driverTrips = driverNames.map(d => driverMap[d].trips);
+      const driverRevenues = driverNames.map(d => driverMap[d].revenue);
+
+      if (chartTripsByDriver) chartTripsByDriver.destroy();
+      if (chartRevenueByDriver) chartRevenueByDriver.destroy();
+
+      chartTripsByDriver = new Chart(document.getElementById('tripsByDriver').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: driverNames,
+          datasets: [{
+            label: 'Trips',
+            data: driverTrips,
+            backgroundColor: '#2563eb'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Driver' } }, y: { title: { display: true, text: 'Trips' } } }
+        }
+      });
+
+      chartRevenueByDriver = new Chart(document.getElementById('revenueByDriver').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: driverNames,
+          datasets: [{
+            label: 'Revenue',
+            data: driverRevenues,
+            backgroundColor: '#22c55e'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Driver' } }, y: { title: { display: true, text: '₹' } } }
+        }
+      });
+    }
+
+    // Render vehicle charts
+    let chartTripsByVehicle, chartRevenueByVehicle;
+    function renderVehicleCharts(trips) {
+      // Trips by Vehicle
+      const vehicleMap = {};
+      trips.forEach(trip => {
+        let v = trip.vehicleModel || "Unknown";
+        if (!vehicleMap[v]) vehicleMap[v] = { revenue: 0, trips: 0, km: 0 };
+        vehicleMap[v].revenue += parseFloat(trip.totalAmount) || 0;
+        vehicleMap[v].trips++;
+        vehicleMap[v].km += parseFloat(trip.totalKm) || 0;
+      });
+      const vehicleNames = Object.keys(vehicleMap);
+      const vehicleTrips = vehicleNames.map(v => vehicleMap[v].trips);
+      const vehicleRevenues = vehicleNames.map(v => vehicleMap[v].revenue);
+
+      if (chartTripsByVehicle) chartTripsByVehicle.destroy();
+      if (chartRevenueByVehicle) chartRevenueByVehicle.destroy();
+
+      chartTripsByVehicle = new Chart(document.getElementById('tripsByVehicle').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: vehicleNames,
+          datasets: [{
+            label: 'Trips',
+            data: vehicleTrips,
+            backgroundColor: '#f59e42'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Vehicle' } }, y: { title: { display: true, text: 'Trips' } } }
+        }
+      });
+
+      chartRevenueByVehicle = new Chart(document.getElementById('revenueByVehicle').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: vehicleNames,
+          datasets: [{
+            label: 'Revenue',
+            data: vehicleRevenues,
+            backgroundColor: '#ef4444'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Vehicle' } }, y: { title: { display: true, text: '₹' } } }
+        }
+      });
+    }
+
+    // Render driver table
+    function renderDriverTable(trips) {
+      const tbody = document.getElementById('driverTableBody');
+      tbody.innerHTML = '';
+      const driverMap = {};
+      trips.forEach(trip => {
+        let d = trip.driverName || "Unknown";
+        if (!driverMap[d]) driverMap[d] = {
+          revenue: 0, paid: 0, outstanding: 0, trips: 0, km: 0, packageTrips: 0, vehicles: {}, outstandingTrips: 0
+        };
+        driverMap[d].revenue += parseFloat(trip.totalAmount) || 0;
+        driverMap[d].paid += parseFloat(trip.paidAmount) || 0;
+        driverMap[d].outstanding += parseFloat(trip.balanceAmount) || 0;
+        driverMap[d].trips++;
+        driverMap[d].km += parseFloat(trip.totalKm) || 0;
+        if (trip.isPackage) driverMap[d].packageTrips++;
+        if (trip.vehicleModel) {
+          if (!driverMap[d].vehicles[trip.vehicleModel]) driverMap[d].vehicles[trip.vehicleModel] = 0;
+          driverMap[d].vehicles[trip.vehicleModel]++;
+        }
+        if ((parseFloat(trip.balanceAmount) || 0) > 0) driverMap[d].outstandingTrips++;
+      });
+      Object.entries(driverMap).forEach(([driver, stats]) => {
+        const avgAmt = stats.trips ? (stats.revenue / stats.trips) : 0;
+        const avgKm = stats.trips ? (stats.km / stats.trips) : 0;
+        const topVehicle = Object.entries(stats.vehicles).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${driver}</td>
+          <td>${stats.trips}</td>
+          <td>₹${stats.revenue.toFixed(2)}</td>
+          <td>₹${stats.paid.toFixed(2)}</td>
+          <td>₹${stats.outstanding.toFixed(2)}</td>
+          <td>${stats.km.toFixed(2)}</td>
+          <td>₹${avgAmt.toFixed(2)}</td>
+          <td>${avgKm.toFixed(2)}</td>
+          <td>${stats.packageTrips}</td>
+          <td>${stats.outstandingTrips}</td>
+          <td>${topVehicle}</td>
+          <td><button class="btn bg-blue-600 text-white px-2 py-1 rounded" onclick="showDriverDetails('${driver.replace(/'/g, "\\'")}')">Details</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Render vehicle table
+    function renderVehicleTable(trips) {
+      const tbody = document.getElementById('vehicleTableBody');
+      tbody.innerHTML = '';
+      const vehicleMap = {};
+      trips.forEach(trip => {
+        let v = trip.vehicleModel || "Unknown";
+        if (!vehicleMap[v]) vehicleMap[v] = {
+          revenue: 0, paid: 0, outstanding: 0, trips: 0, km: 0, packageTrips: 0, drivers: {}, outstandingTrips: 0
+        };
+        vehicleMap[v].revenue += parseFloat(trip.totalAmount) || 0;
+        vehicleMap[v].paid += parseFloat(trip.paidAmount) || 0;
+        vehicleMap[v].outstanding += parseFloat(trip.balanceAmount) || 0;
+        vehicleMap[v].trips++;
+        vehicleMap[v].km += parseFloat(trip.totalKm) || 0;
+        if (trip.isPackage) vehicleMap[v].packageTrips++;
+        if (trip.driverName) {
+          if (!vehicleMap[v].drivers[trip.driverName]) vehicleMap[v].drivers[trip.driverName] = 0;
+          vehicleMap[v].drivers[trip.driverName]++;
+        }
+        if ((parseFloat(trip.balanceAmount) || 0) > 0) vehicleMap[v].outstandingTrips++;
+      });
+      Object.entries(vehicleMap).forEach(([vehicle, stats]) => {
+        const avgAmt = stats.trips ? (stats.revenue / stats.trips) : 0;
+        const avgKm = stats.trips ? (stats.km / stats.trips) : 0;
+        const topDriver = Object.entries(stats.drivers).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${vehicle}</td>
+          <td>${stats.trips}</td>
+          <td>₹${stats.revenue.toFixed(2)}</td>
+          <td>₹${stats.paid.toFixed(2)}</td>
+          <td>₹${stats.outstanding.toFixed(2)}</td>
+          <td>${stats.km.toFixed(2)}</td>
+          <td>₹${avgAmt.toFixed(2)}</td>
+          <td>${avgKm.toFixed(2)}</td>
+          <td>${stats.packageTrips}</td>
+          <td>${stats.outstandingTrips}</td>
+          <td>${topDriver}</td>
+          <td><button class="btn bg-blue-600 text-white px-2 py-1 rounded" onclick="showVehicleDetails('${vehicle.replace(/'/g, "\\'")}')">Details</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Render driver-vehicle matrix table
+    function renderMatrixTable(trips) {
+      const drivers = Array.from(new Set(trips.map(t => t.driverName || "Unknown"))).sort();
+      const vehicles = Array.from(new Set(trips.map(t => t.vehicleModel || "Unknown"))).sort();
+      const matrix = {};
+      drivers.forEach(d => { matrix[d] = {}; vehicles.forEach(v => { matrix[d][v] = 0; }); });
+      trips.forEach(t => {
+        const d = t.driverName || "Unknown";
+        const v = t.vehicleModel || "Unknown";
+        matrix[d][v]++;
+      });
+      // Head
+      const thead = document.getElementById('matrixTableHead');
+      thead.innerHTML = `<tr><th>Driver \\ Vehicle</th>${vehicles.map(v => `<th>${v}</th>`).join('')}</tr>`;
+      // Body
+      const tbody = document.getElementById('matrixTableBody');
+      tbody.innerHTML = '';
+      drivers.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${d}</td>${vehicles.map(v => `<td>${matrix[d][v]}</td>`).join('')}`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Render top drivers/vehicles
+    function renderTopDriversVehicles(trips) {
+      // Top Drivers
+      const driverMap = {};
+      trips.forEach(trip => {
+        let d = trip.driverName || "Unknown";
+        if (!driverMap[d]) driverMap[d] = { revenue: 0, trips: 0, km: 0 };
+        driverMap[d].revenue += parseFloat(trip.totalAmount) || 0;
+        driverMap[d].trips++;
+        driverMap[d].km += parseFloat(trip.totalKm) || 0;
+      });
+      const topDrivers = Object.entries(driverMap).sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 10);
+      const ulD = document.getElementById('topDrivers');
+      ulD.innerHTML = topDrivers.map(([name, stats]) => `<li>${name}: ₹${stats.revenue.toLocaleString()} (${stats.trips} trips, ${stats.km.toFixed(0)} km)</li>`).join('');
+
+      // Top Vehicles
+      const vehicleMap = {};
+      trips.forEach(trip => {
+        let v = trip.vehicleModel || "Unknown";
+        if (!vehicleMap[v]) vehicleMap[v] = { revenue: 0, trips: 0, km: 0 };
+        vehicleMap[v].revenue += parseFloat(trip.totalAmount) || 0;
+        vehicleMap[v].trips++;
+        vehicleMap[v].km += parseFloat(trip.totalKm) || 0;
+      });
+      const topVehicles = Object.entries(vehicleMap).sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 10);
+      const ulV = document.getElementById('topVehicles');
+      ulV.innerHTML = topVehicles.map(([name, stats]) => `<li>${name}: ₹${stats.revenue.toLocaleString()} (${stats.trips} trips, ${stats.km.toFixed(0)} km)</li>`).join('');
+    }
+
+    // Show driver details
+    window.showDriverDetails = function(driver) {
+      const detailsSection = document.getElementById('detailsSection');
+      const detailsTitle = document.getElementById('detailsTitle');
+      const detailsTableBody = document.getElementById('detailsTableBody');
+      detailsSection.style.display = '';
+      detailsTitle.textContent = `Trips for Driver: ${driver}`;
+      detailsTableBody.innerHTML = '';
+      groupTrips(allTrips).filter(t => t.driverName === driver).forEach(trip => {
+        let statusClass = '';
+        if (trip.paymentStatus === 'Paid') statusClass = 'status-badge status-paid';
+        else if (trip.paymentStatus === 'Not Paid') statusClass = 'status-badge status-notpaid';
+        else if (trip.paymentStatus === 'Partially Paid') statusClass = 'status-badge status-partial';
+        else statusClass = '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${trip.bookingId || ''}</td>
+          <td>${trip.tripDates}</td>
+          <td>${trip.duty || ''}</td>
+          <td>${trip.customerName || ''}</td>
+          <td>${trip.driverName || ''}</td>
+          <td>${trip.vehicleModel || ''}</td>
+          <td>${trip.totalAmount || ''}</td>
+          <td>${trip.paidAmount || ''}</td>
+          <td>${trip.balanceAmount || ''}</td>
+          <td><span class="${statusClass}">${trip.paymentStatus || ''}</span></td>
+          <td>${(trip.paymentStatus !== 'Paid' && trip.bookingId) ? `<button class="mark-paid-btn" data-id="${trip.bookingId}">Mark Paid</button>` : ''}</td>
+        `;
+        detailsTableBody.appendChild(tr);
+      });
+      document.getElementById('closeDetails').onclick = () => { detailsSection.style.display = 'none'; };
+      detailsTableBody.querySelectorAll('.mark-paid-btn').forEach(btn => {
+        btn.onclick = async function() {
+          const bookingId = this.getAttribute('data-id');
+          const snap = await get(child(dbRef, 'trips'));
+          if (snap.exists()) {
+            const data = snap.val();
+            const updates = {};
+            Object.entries(data).forEach(([key, trip]) => {
+              if (trip.bookingId === bookingId) {
+                updates[`trips/${key}/paymentStatus`] = "Paid";
+                updates[`trips/${key}/paidAmount`] = trip.totalAmount || "0";
+                updates[`trips/${key}/balanceAmount`] = "0";
+              }
+            });
+            await update(dbRef, updates);
+            alert("Marked as Paid!");
+            await loadTrips();
+          }
+        };
+      });
+    };
+
+    // Show vehicle details
+    window.showVehicleDetails = function(vehicle) {
+      const detailsSection = document.getElementById('detailsSection');
+      const detailsTitle = document.getElementById('detailsTitle');
+      const detailsTableBody = document.getElementById('detailsTableBody');
+      detailsSection.style.display = '';
+      detailsTitle.textContent = `Trips for Vehicle: ${vehicle}`;
+      detailsTableBody.innerHTML = '';
+      groupTrips(allTrips).filter(t => t.vehicleModel === vehicle).forEach(trip => {
+        let statusClass = '';
+        if (trip.paymentStatus === 'Paid') statusClass = 'status-badge status-paid';
+        else if (trip.paymentStatus === 'Not Paid') statusClass = 'status-badge status-notpaid';
+        else if (trip.paymentStatus === 'Partially Paid') statusClass = 'status-badge status-partial';
+        else statusClass = '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${trip.bookingId || ''}</td>
+          <td>${trip.tripDates}</td>
+          <td>${trip.duty || ''}</td>
+          <td>${trip.customerName || ''}</td>
+          <td>${trip.driverName || ''}</td>
+          <td>${trip.vehicleModel || ''}</td>
+          <td>${trip.totalAmount || ''}</td>
+          <td>${trip.paidAmount || ''}</td>
+          <td>${trip.balanceAmount || ''}</td>
+          <td><span class="${statusClass}">${trip.paymentStatus || ''}</span></td>
+          <td>${(trip.paymentStatus !== 'Paid' && trip.bookingId) ? `<button class="mark-paid-btn" data-id="${trip.bookingId}">Mark Paid</button>` : ''}</td>
+        `;
+        detailsTableBody.appendChild(tr);
+      });
+      document.getElementById('closeDetails').onclick = () => { detailsSection.style.display = 'none'; };
+      detailsTableBody.querySelectorAll('.mark-paid-btn').forEach(btn => {
+        btn.onclick = async function() {
+          const bookingId = this.getAttribute('data-id');
+          const snap = await get(child(dbRef, 'trips'));
+          if (snap.exists()) {
+            const data = snap.val();
+            const updates = {};
+            Object.entries(data).forEach(([key, trip]) => {
+              if (trip.bookingId === bookingId) {
+                updates[`trips/${key}/paymentStatus`] = "Paid";
+                updates[`trips/${key}/paidAmount`] = trip.totalAmount || "0";
+                updates[`trips/${key}/balanceAmount`] = "0";
+              }
+            });
+            await update(dbRef, updates);
+            alert("Marked as Paid!");
+            await loadTrips();
+          }
+        };
+      });
+    };
+
+    // Date range filter and clear
+    document.getElementById('fromDate').addEventListener('change', renderAll);
+    document.getElementById('toDate').addEventListener('change', renderAll);
+    document.getElementById('clearFilters').addEventListener('click', function() {
+      document.getElementById('fromDate').value = '';
+      document.getElementById('toDate').value = '';
+      renderAll();
+    });
+
+    // Initial load
+    loadTrips();
+  </script>
+</body>
+</html>

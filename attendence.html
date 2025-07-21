@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendance - NST Travels</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background-color: #f3f4f6;
+      font-weight: 600;
+      transition: background 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 2.5rem 1rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s, color 0.3s;
+    }
+    th, td {
+      text-align: center;
+      vertical-align: middle;
+      font-size: 1rem;
+      padding: 0.5rem 0.7rem;
+      border: 1px solid #e5e7eb;
+      background: inherit;
+    }
+    th {
+      background: #2563eb;
+      color: #fff !important;
+      font-weight: 700;
+      font-size: 1.05rem;
+      border-bottom: 2px solid #1d4ed8;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .export-btn {
+      background: #2563eb;
+      color: #fff;
+      margin-right: 0.5rem;
+    }
+    .export-btn:hover {
+      background: #1d4ed8;
+    }
+    .search-bar {
+      max-width: 300px;
+    }
+    .filter-select {
+      min-width: 180px;
+    }
+    .tab-btn {
+      background: #e0e7ff;
+      color: #2563eb;
+      font-weight: 700;
+      border-radius: 0.5rem 0.5rem 0 0;
+      padding: 0.7rem 1.5rem;
+      margin-right: 0.5rem;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: background 0.2s;
+    }
+    .tab-btn.active {
+      background: #2563eb;
+      color: #fff;
+    }
+    .cell-onduty {
+      background: #bbf7d0 !important;
+      color: #166534 !important;
+      font-weight: 700;
+    }
+    .cell-leave, .cell-noduty, .cell-service {
+      background: #fef9c3 !important;
+      color: #a16207 !important;
+      font-weight: 700;
+    }
+    .cell-absent {
+      background: #fee2e2 !important;
+      color: #b91c1c !important;
+      font-weight: 700;
+    }
+    .overview-box {
+      background: #e0e7ff;
+      color: #1e40af;
+      border-radius: 0.7rem;
+      padding: 1rem 1.5rem;
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .month-label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #2563eb;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    @media (max-width: 640px) {
+      .container {
+        padding: 0.5rem 0.1rem;
+      }
+      th, td {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.5rem;
+      }
+      .overview-box, .month-label {
+        font-size: 0.95rem;
+        padding: 0.7rem 0.5rem;
+      }
+    }
+    html.dark body {
+      background: #18181b;
+      color: #f3f4f6;
+    }
+    html.dark .container {
+      background: #23232a;
+      color: #f3f4f6;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    html.dark th {
+      background: #2563eb;
+      color: #fff;
+    }
+    html.dark td {
+      background: #23232a;
+      color: #f3f4f6;
+    }
+    html.dark .overview-box, html.dark .month-label {
+      background: #1e40af;
+      color: #fff;
+    }
+    .footer-text {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .admin-link {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <button id="themeToggle" class="fixed top-4 left-4 z-50 btn bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-3 py-2 rounded-md shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+    <i class="fas fa-moon"></i>
+  </button>
+  <div class="container max-w-7xl mx-auto py-8">
+    <a href="admin-panel.html" class="admin-link btn bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900">
+      <i class="fas fa-cog mr-2"></i> Admin Panel
+    </a>
+    <h3 class="text-3xl font-bold text-gray-900 mb-8"><i class="fas fa-calendar-check mr-2"></i> Attendance</h3>
+    <div class="flex flex-wrap gap-4 mb-6 items-center">
+      <label class="font-bold">Month:
+        <input type="month" id="monthInput" class="input-field filter-select" />
+      </label>
+      <button class="tab-btn active" id="tabDrivers">Driver</button>
+      <button class="tab-btn" id="tabVehicles">Vehicle</button>
+    </div>
+    <div id="driversSection">
+      <div class="flex flex-wrap gap-4 mb-4 items-center">
+        <input type="text" id="driverSearch" class="input-field filter-select" placeholder="Search driver..." />
+        <select id="driverSelect" class="input-field filter-select"></select>
+        <button id="searchDriverBtn" class="btn bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700">Search</button>
+        <button id="exportExcelDriver" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+        <button id="exportPDFDriver" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
+      </div>
+      <div class="month-label" id="driverMonthLabel"></div>
+      <div class="responsive-table">
+        <table class="attendance-table w-full" id="driverTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Driver</th>
+              <th>Attendance</th>
+              <th>Total KM</th>
+              <th>Total Hrs</th>
+            </tr>
+          </thead>
+          <tbody id="driverTableBody"></tbody>
+        </table>
+      </div>
+      <div class="overview-box" id="driverOverview"></div>
+    </div>
+    <div id="vehiclesSection" style="display:none;">
+      <div class="flex flex-wrap gap-4 mb-4 items-center">
+        <input type="text" id="vehicleSearch" class="input-field filter-select" placeholder="Search vehicle..." />
+        <select id="vehicleSelect" class="input-field filter-select"></select>
+        <button id="searchVehicleBtn" class="btn bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700">Search</button>
+        <button id="exportExcelVehicle" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+        <button id="exportPDFVehicle" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
+      </div>
+      <div class="month-label" id="vehicleMonthLabel"></div>
+      <div class="responsive-table">
+        <table class="attendance-table w-full" id="vehicleTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vehicle</th>
+              <th>Attendance</th>
+              <th>Total KM</th>
+              <th>Total Hrs</th>
+            </tr>
+          </thead>
+          <tbody id="vehicleTableBody"></tbody>
+        </table>
+      </div>
+      <div class="overview-box" id="vehicleOverview"></div>
+    </div>
+  </div>
+  <footer class="bg-gray-800 text-white py-6 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="footer-text">© 2025 NST Travels. All rights reserved.</p>
+    </div>
+  </footer>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, child, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz2rGDr0iREns6Rg6r1z5EHE3qhLDnEzs",
+      authDomain: "narayananselvitravels-26dcb.firebaseapp.com",
+      databaseURL: "https://narayananselvitravels-26dcb-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "narayananselvitravels-26dcb",
+      storageBucket: "narayananselvitravels-26dcb.appspot.com",
+      messagingSenderId: "395599682835",
+      appId: "1:395599682835:web:9d46e03ca14aa0738dcee6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db);
+
+    let allTrips = [];
+    let allDrivers = [];
+    let allVehicles = [];
+    let allLeaves = {};
+    let allNonTrips = {};
+
+    // Dark Mode Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+    function updateThemeIcon() {
+      if (htmlEl.classList.contains('dark')) {
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+      } else {
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+      }
+    }
+    if (localStorage.getItem('theme') === 'dark' ||
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.add('dark');
+    } else {
+      htmlEl.classList.remove('dark');
+    }
+    updateThemeIcon();
+    themeToggle.addEventListener('click', () => {
+      htmlEl.classList.toggle('dark');
+      localStorage.setItem('theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
+      updateThemeIcon();
+    });
+
+    function formatDate(dateObj) {
+      // dateObj is a Date object in UTC
+      const day = String(dateObj.getUTCDate()).padStart(2, '0');
+      const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const year = dateObj.getUTCFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    function getDaysInMonth(year, month) {
+      // month: 0-based (0=Jan, 6=July)
+      const days = [];
+      const numDays = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+      for (let d = 1; d <= numDays; d++) {
+        days.push(new Date(Date.UTC(year, month, d)));
+      }
+      return days;
+    }
+
+    async function loadAll() {
+      const [tripsSnap, driversSnap, vehiclesSnap, leavesSnap, nonTripsSnap] = await Promise.all([
+        get(child(dbRef, 'trips')),
+        get(child(dbRef, 'drivers')),
+        get(child(dbRef, 'vehicles')),
+        get(child(dbRef, 'driverLeaves')),
+        get(child(dbRef, 'nonTripDays'))
+      ]);
+      allTrips = tripsSnap.exists() ? Object.values(tripsSnap.val()) : [];
+      allDrivers = driversSnap.exists() ? Object.values(driversSnap.val()) : [];
+      allVehicles = vehiclesSnap.exists() ? Object.values(vehiclesSnap.val()) : [];
+      allLeaves = leavesSnap.exists() ? leavesSnap.val() : {};
+      allNonTrips = nonTripsSnap.exists() ? nonTripsSnap.val() : {};
+      populateDriverDropdown();
+      populateVehicleDropdown();
+      renderDriverTable();
+      renderVehicleTable();
+    }
+
+    function populateDriverDropdown() {
+      const select = document.getElementById('driverSelect');
+      select.innerHTML = '<option value="">Select Driver</option>';
+      allDrivers.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.name;
+        opt.textContent = d.name;
+        select.appendChild(opt);
+      });
+    }
+
+    function populateVehicleDropdown() {
+      const select = document.getElementById('vehicleSelect');
+      select.innerHTML = '<option value="">Select Vehicle</option>';
+      allVehicles.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.model;
+        opt.textContent = v.model;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderDriverTable() {
+      const monthInput = document.getElementById('monthInput');
+      let now = new Date();
+      if (!monthInput.value) {
+        monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      }
+      const [year, month] = monthInput.value.split('-').map(Number);
+      const days = getDaysInMonth(year, month - 1);
+      const driver = document.getElementById('driverSelect').value;
+      const tbody = document.getElementById('driverTableBody');
+      const overview = document.getElementById('driverOverview');
+      const monthLabel = document.getElementById('driverMonthLabel');
+      tbody.innerHTML = '';
+      overview.innerHTML = '';
+      monthLabel.innerHTML = `Showing: <b>${new Date(Date.UTC(year, month - 1)).toLocaleString('default', { month: 'long', year: 'numeric' })}</b>`;
+      if (!driver) return;
+      let present = 0, absent = 0;
+      days.forEach(day => {
+        const dateStr = day.toISOString().split('T')[0];
+        const trips = allTrips.filter(t => t.driverName === driver && t.date === dateStr);
+        const totalKm = trips.reduce((a, t) => a + (parseFloat(t.totalKm) || 0), 0);
+
+        // Duration: sum all trip durations (in hours and minutes)
+        let totalMinutes = 0;
+        trips.forEach(t => {
+          if (t.duration) {
+            const match = t.duration.match(/(\d+)\s*hours?(?:\s*(\d+)\s*minutes?)?/i);
+            if (match) {
+              totalMinutes += parseInt(match[1]) * 60;
+              if (match[2]) totalMinutes += parseInt(match[2]);
+            }
+          }
+        });
+        let totalHrsDisplay = '-';
+        if (totalMinutes > 0) {
+          const hrs = Math.floor(totalMinutes / 60);
+          const mins = totalMinutes % 60;
+          totalHrsDisplay = `${hrs ? hrs + ' hr' : ''}${hrs && mins ? ' ' : ''}${mins ? mins + ' min' : (hrs ? '' : '-')}`;
+        }
+
+        let attCell = '';
+        const leaveKey = `${dateStr}_${driver}`;
+        const isLeave = allLeaves[leaveKey];
+        if (trips.length > 0) {
+          attCell = `<span class="cell-onduty">On-Duty</span>`;
+          present++;
+        } else if (isLeave) {
+          attCell = `<span class="cell-leave">Leave</span>`;
+        } else {
+          attCell = `<span class="cell-absent">Absent</span>`;
+          absent++;
+        }
+
+        tbody.innerHTML += `<tr>
+          <td>${formatDate(day)}</td>
+          <td>${driver}</td>
+          <td>${attCell}</td>
+          <td>${totalKm ? totalKm.toFixed(2) : '-'}</td>
+          <td>${totalHrsDisplay}</td>
+        </tr>`;
+      });
+      const totalDays = days.length;
+      const percent = totalDays ? Math.round((present / totalDays) * 100) : 0;
+      overview.innerHTML = `Total Days: <b>${totalDays}</b> &nbsp; | &nbsp; Present: <b>${present}</b> &nbsp; | &nbsp; Absent: <b>${absent}</b> &nbsp; | &nbsp; Attendance: <b>${percent}%</b>`;
+    }
+
+    function renderVehicleTable() {
+      const monthInput = document.getElementById('monthInput');
+      let now = new Date();
+      if (!monthInput.value) {
+        monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      }
+      const [year, month] = monthInput.value.split('-').map(Number);
+      const days = getDaysInMonth(year, month - 1);
+      const vehicle = document.getElementById('vehicleSelect').value;
+      const tbody = document.getElementById('vehicleTableBody');
+      const overview = document.getElementById('vehicleOverview');
+      const monthLabel = document.getElementById('vehicleMonthLabel');
+      tbody.innerHTML = '';
+      overview.innerHTML = '';
+      monthLabel.innerHTML = `Showing: <b>${new Date(Date.UTC(year, month - 1)).toLocaleString('default', { month: 'long', year: 'numeric' })}</b>`;
+      if (!vehicle) return;
+      let present = 0, absent = 0, service = 0, noduty = 0;
+      days.forEach(day => {
+        const dateStr = day.toISOString().split('T')[0];
+        const trips = allTrips.filter(t => t.vehicleModel === vehicle && t.date === dateStr);
+        const totalKm = trips.reduce((a, t) => a + (parseFloat(t.totalKm) || 0), 0);
+
+        // Duration: sum all trip durations (in hours and minutes)
+        let totalMinutes = 0;
+        trips.forEach(t => {
+          if (t.duration) {
+            const match = t.duration.match(/(\d+)\s*hours?(?:\s*(\d+)\s*minutes?)?/i);
+            if (match) {
+              totalMinutes += parseInt(match[1]) * 60;
+              if (match[2]) totalMinutes += parseInt(match[2]);
+            }
+          }
+        });
+        let totalHrsDisplay = '-';
+        if (totalMinutes > 0) {
+          const hrs = Math.floor(totalMinutes / 60);
+          const mins = totalMinutes % 60;
+          totalHrsDisplay = `${hrs ? hrs + ' hr' : ''}${hrs && mins ? ' ' : ''}${mins ? mins + ' min' : (hrs ? '' : '-')}`;
+        }
+
+        let attCell = '';
+        // Find non-trip/service for this vehicle and date
+        const nonTrip = Object.entries(allNonTrips).find(([key, nt]) =>
+          nt.vehicleModel === vehicle && nt.date === dateStr
+        );
+        if (trips.length > 0) {
+          attCell = `<span class="cell-onduty">On-Duty</span>`;
+          present++;
+        } else if (nonTrip) {
+          const status = nonTrip[1].status || '';
+          if (status === "No Duty") {
+            attCell = `<span class="cell-noduty">No Duty</span>`;
+            noduty++;
+          } else {
+            attCell = `<span class="cell-service">Service Vehicle</span>`;
+            service++;
+          }
+        } else {
+          attCell = `<span class="cell-absent">Absent</span>`;
+          absent++;
+        }
+
+        tbody.innerHTML += `<tr>
+          <td>${formatDate(day)}</td>
+          <td>${vehicle}</td>
+          <td>${attCell}</td>
+          <td>${totalKm ? totalKm.toFixed(2) : '-'}</td>
+          <td>${totalHrsDisplay}</td>
+        </tr>`;
+      });
+      const totalDays = days.length;
+      const percent = totalDays ? Math.round((present / totalDays) * 100) : 0;
+      overview.innerHTML = `Total Days: <b>${totalDays}</b> &nbsp; | &nbsp; On-Duty: <b>${present}</b> &nbsp; | &nbsp; No Duty: <b>${noduty}</b> &nbsp; | &nbsp; Service: <b>${service}</b> &nbsp; | &nbsp; Absent: <b>${absent}</b> &nbsp; | &nbsp; Attendance: <b>${percent}%</b>`;
+    }
+
+    document.getElementById('tabDrivers').onclick = function() {
+      this.classList.add('active');
+      document.getElementById('tabVehicles').classList.remove('active');
+      document.getElementById('driversSection').style.display = '';
+      document.getElementById('vehiclesSection').style.display = 'none';
+    };
+    document.getElementById('tabVehicles').onclick = function() {
+      this.classList.add('active');
+      document.getElementById('tabDrivers').classList.remove('active');
+      document.getElementById('driversSection').style.display = 'none';
+      document.getElementById('vehiclesSection').style.display = '';
+    };
+
+    document.getElementById('monthInput').addEventListener('change', () => {
+      renderDriverTable();
+      renderVehicleTable();
+    });
+
+    document.getElementById('searchDriverBtn').addEventListener('click', renderDriverTable);
+    document.getElementById('driverSelect').addEventListener('change', renderDriverTable);
+    document.getElementById('driverSearch').addEventListener('input', function() {
+      const val = this.value.toLowerCase();
+      const select = document.getElementById('driverSelect');
+      for (let i = 0; i < select.options.length; i++) {
+        const opt = select.options[i];
+        opt.style.display = !val || opt.value.toLowerCase().includes(val) ? '' : 'none';
+      }
+    });
+
+    document.getElementById('searchVehicleBtn').addEventListener('click', renderVehicleTable);
+    document.getElementById('vehicleSelect').addEventListener('change', renderVehicleTable);
+    document.getElementById('vehicleSearch').addEventListener('input', function() {
+      const val = this.value.toLowerCase();
+      const select = document.getElementById('vehicleSelect');
+      for (let i = 0; i < select.options.length; i++) {
+        const opt = select.options[i];
+        opt.style.display = !val || opt.value.toLowerCase().includes(val) ? '' : 'none';
+      }
+    });
+
+    document.getElementById('exportExcelDriver').addEventListener('click', function() {
+      const table = document.getElementById('driverTable');
+      const wb = XLSX.utils.table_to_book(table, {sheet:"Driver Attendance"});
+      XLSX.writeFile(wb, 'driver-attendance.xlsx');
+    });
+    document.getElementById('exportExcelVehicle').addEventListener('click', function() {
+      const table = document.getElementById('vehicleTable');
+      const wb = XLSX.utils.table_to_book(table, {sheet:"Vehicle Attendance"});
+      XLSX.writeFile(wb, 'vehicle-attendance.xlsx');
+    });
+
+    document.getElementById('exportPDFDriver').addEventListener('click', function() {
+      const { jsPDF } = window.jspdf;
+      const table = document.getElementById('driverTable');
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a2" });
+      doc.autoTable({
+        html: table,
+        startY: 40,
+        styles: { font: "helvetica", fontSize: 10, cellPadding: 3, halign: 'center', valign: 'middle' },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 10, right: 10 },
+        theme: 'grid',
+        didDrawPage: function (data) {
+          doc.setFontSize(16);
+          doc.setTextColor(40);
+          doc.text("Driver Attendance - NST Travels", data.settings.margin.left + 20, 28, { align: 'left' });
+        }
+      });
+      doc.save('driver-attendance.pdf');
+    });
+    document.getElementById('exportPDFVehicle').addEventListener('click', function() {
+      const { jsPDF } = window.jspdf;
+      const table = document.getElementById('vehicleTable');
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a2" });
+      doc.autoTable({
+        html: table,
+        startY: 40,
+        styles: { font: "helvetica", fontSize: 10, cellPadding: 3, halign: 'center', valign: 'middle' },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 10, right: 10 },
+        theme: 'grid',
+        didDrawPage: function (data) {
+          doc.setFontSize(16);
+          doc.setTextColor(40);
+          doc.text("Vehicle Attendance - NST Travels", data.settings.margin.left + 20, 28, { align: 'left' });
+        }
+      });
+      doc.save('vehicle-attendance.pdf');
+    });
+
+    loadAll();
+  </script>
+</body>
+</html>

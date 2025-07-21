@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver & Vehicle Management - NST Travels</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; min-height: 100vh; background-color: #f3f4f6; font-weight: 600; }
+    .container { max-width: 1100px; margin: auto; padding: 2.5rem 1rem; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);}
+    th, td { text-align: center; vertical-align: middle; font-size: 1rem; padding: 0.5rem 0.7rem; border: 1px solid #e5e7eb; background: inherit;}
+    th { background: #2563eb; color: #fff !important; font-weight: 700; font-size: 1.05rem; border-bottom: 2px solid #1d4ed8; position: sticky; top: 0; z-index: 2;}
+    .export-btn { background: #2563eb; color: #fff; margin-right: 0.5rem;}
+    .export-btn:hover { background: #1d4ed8;}
+    .tab-btn { background: #e0e7ff; color: #2563eb; font-weight: 700; border-radius: 0.5rem 0.5rem 0 0; padding: 0.7rem 1.5rem; margin-right: 0.5rem; cursor: pointer; border: none; outline: none; transition: background 0.2s;}
+    .tab-btn.active { background: #2563eb; color: #fff;}
+    .status-badge { display: inline-block; padding: 0.25em 0.8em; border-radius: 0.5em; font-weight: 700; font-size: 0.98em; color: #fff; letter-spacing: 0.5px;}
+    .status-active { background: #22c55e; }
+    .status-inactive { background: #ef4444; }
+    .status-service { background: #0ea5e9; }
+    .status-left, .status-sold { background: #a21caf; }
+    .toast { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; background: #2563eb; color: #fff; padding: 1rem 2rem; border-radius: 0.7rem; font-weight: 700; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(37,99,235,0.08); display: none;}
+    .input-field, .select-field { width: 100%; padding: 0.7rem; border-radius: 0.5rem; border: 1px solid #d1d5db; font-size: 1rem; font-weight: 600; }
+    .input-field:focus, .select-field:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px #2563eb33;}
+    .form-label { font-size: 1rem; font-weight: 700; color: #1f2937;}
+    .section-heading { font-size: 1.3rem; font-weight: 800; color: #1f2937; margin-bottom: 1.2rem; display: flex; align-items: center;}
+    .action-btn { margin: 0 2px; padding: 0.25rem 0.7rem; border-radius: 0.25rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; border: none; background: transparent; color: #2563eb;}
+    .action-btn:hover { color: #1d4ed8;}
+    .profile-img, .vehicle-img { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 2px solid #2563eb; background: #f3f4f6;}
+    .file-label { font-size: 0.95rem; color: #2563eb; font-weight: 600; cursor: pointer;}
+    .file-name { font-size: 0.95rem; color: #1e293b; margin-left: 0.5rem;}
+    .bulk-import { margin-top: 0.5rem; font-size: 0.95rem; color: #0ea5e9; cursor: pointer; text-decoration: underline;}
+    .modal-bg { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3);}
+    .modal { background: #fff; border-radius: 1rem; max-width: 420px; margin: 8vh auto; padding: 2rem 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.2);}
+    .modal input, .modal select { margin-bottom: 1rem;}
+    .modal-close { position: absolute; right: 1.2rem; top: 1.2rem; font-size: 1.5rem; color: #ef4444; cursor: pointer;}
+    @media (max-width: 900px) { .container { padding: 1.2rem 0.2rem;} th, td { font-size: 0.95rem; padding: 0.3rem 0.5rem;}}
+    @media (max-width: 640px) { .container { padding: 0.5rem 0.1rem;} th, td { font-size: 0.85rem; padding: 0.2rem 0.3rem;}}
+    html.dark body { background: #18181b; color: #f3f4f6;}
+    html.dark .container { background: #23232a; color: #f3f4f6; box-shadow: 0 4px 20px rgba(0,0,0,0.4);}
+    html.dark th { background: #2563eb; color: #fff;}
+    html.dark td { background: #23232a; color: #f3f4f6;}
+    html.dark .toast { background: #1e40af; color: #fff;}
+    html.dark .modal { background: #23232a; color: #f3f4f6;}
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Driver & Vehicle Management</h2>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+      <div class="card bg-white rounded-lg shadow-md p-6 text-center">
+        <h5 class="text-lg font-semibold text-gray-900 mb-2">Total Drivers</h5>
+        <h3 class="stat-number" id="driverCount">0</h3>
+      </div>
+      <div class="card bg-white rounded-lg shadow-md p-6 text-center">
+        <h5 class="text-lg font-semibold text-gray-900 mb-2">Total Vehicles</h5>
+        <h3 class="stat-number" id="vehicleCount">0</h3>
+      </div>
+    </div>
+    <!-- Tabs -->
+    <div class="mb-4">
+      <button class="tab-btn active" id="tabDrivers">Drivers</button>
+      <button class="tab-btn" id="tabVehicles">Vehicles</button>
+    </div>
+    <!-- Driver Management -->
+    <div id="driversSection">
+      <div class="flex flex-wrap gap-4 mb-4 items-center">
+        <input type="text" id="driverSearchList" class="input-field search-bar filter-select" placeholder="Search driver..." />
+        <button id="addDriverBtn" class="btn bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"><i class="fas fa-plus"></i> Add Driver</button>
+        <button id="exportExcelDriverList" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+        <button id="exportPDFDriverList" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
+      </div>
+      <div class="overflow-x-auto mb-8">
+        <table class="table-auto border-collapse border border-gray-200" id="driverTable">
+          <thead>
+            <tr>
+              <th class="border border-gray-200">Photo</th>
+              <th class="border border-gray-200">Driver Name</th>
+              <th class="border border-gray-200">Mobile Number</th>
+              <th class="border border-gray-200">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="driverTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Vehicle Management -->
+    <div id="vehiclesSection" style="display:none;">
+      <div class="flex flex-wrap gap-4 mb-4 items-center">
+        <input type="text" id="vehicleSearchList" class="input-field search-bar filter-select" placeholder="Search vehicle..." />
+        <button id="addVehicleBtn" class="btn bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"><i class="fas fa-plus"></i> Add Vehicle</button>
+        <button id="exportExcelVehicleList" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+        <button id="exportPDFVehicleList" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="table-auto border-collapse border border-gray-200" id="vehicleTable">
+          <thead>
+            <tr>
+              <th class="border border-gray-200">Photo</th>
+              <th class="border border-gray-200">Vehicle Model</th>
+              <th class="border border-gray-200">Vehicle Number</th>
+              <th class="border border-gray-200">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="vehicleTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- Driver Modal -->
+  <div id="driverModalBg" class="modal-bg">
+    <div class="modal relative">
+      <span class="modal-close" id="closeDriverModal">&times;</span>
+      <h3 class="text-xl font-bold mb-4" id="driverModalTitle">Add Driver</h3>
+      <form id="driverModalForm">
+        <input type="hidden" id="driverModalKey" />
+        <label class="form-label">Name</label>
+        <input type="text" id="driverModalName" class="input-field" required />
+        <label class="form-label">Mobile Number</label>
+        <input type="text" id="driverModalNumber" class="input-field" required />
+        <label class="form-label">Photo</label>
+        <input type="file" id="driverModalPhoto" class="input-field" accept="image/*" />
+        <img id="driverModalPhotoPreview" src="" alt="" style="display:none;width:60px;height:60px;border-radius:50%;margin:0.5rem 0;" />
+        <button type="submit" class="btn bg-indigo-600 text-white w-full px-6 py-2 rounded-md hover:bg-indigo-700 mt-2">Save</button>
+      </form>
+    </div>
+  </div>
+  <!-- Vehicle Modal -->
+  <div id="vehicleModalBg" class="modal-bg">
+    <div class="modal relative">
+      <span class="modal-close" id="closeVehicleModal">&times;</span>
+      <h3 class="text-xl font-bold mb-4" id="vehicleModalTitle">Add Vehicle</h3>
+      <form id="vehicleModalForm">
+        <input type="hidden" id="vehicleModalKey" />
+        <label class="form-label">Model</label>
+        <input type="text" id="vehicleModalModel" class="input-field" required />
+        <label class="form-label">Number</label>
+        <input type="text" id="vehicleModalNumber" class="input-field" required />
+        <label class="form-label">Photo</label>
+        <input type="file" id="vehicleModalPhoto" class="input-field" accept="image/*" />
+        <img id="vehicleModalPhotoPreview" src="" alt="" style="display:none;width:60px;height:60px;border-radius:50%;margin:0.5rem 0;" />
+        <button type="submit" class="btn bg-green-600 text-white w-full px-6 py-2 rounded-md hover:bg-green-700 mt-2">Save</button>
+      </form>
+    </div>
+  </div>
+  <footer class="bg-gray-800 text-white py-6 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p>© 2025 NST Travels. All rights reserved.</p>
+    </div>
+  </footer>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz2rGDr0iREns6Rg6r1z5EHE3qhLDnEzs",
+      authDomain: "narayananselvitravels-26dcb.firebaseapp.com",
+      databaseURL: "https://narayananselvitravels-26dcb-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "narayananselvitravels-26dcb",
+      storageBucket: "narayananselvitravels-26dcb.appspot.com",
+      messagingSenderId: "395599682835",
+      appId: "1:395599682835:web:9d46e03ca14aa0738dcee6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Toast
+    function showToast(msg, success = true) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.background = success ? '#2563eb' : '#ef4444';
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    }
+
+    // Tabs
+    document.getElementById('tabDrivers').onclick = function() {
+      this.classList.add('active');
+      document.getElementById('tabVehicles').classList.remove('active');
+      document.getElementById('driversSection').style.display = '';
+      document.getElementById('vehiclesSection').style.display = 'none';
+    };
+    document.getElementById('tabVehicles').onclick = function() {
+      this.classList.add('active');
+      document.getElementById('tabDrivers').classList.remove('active');
+      document.getElementById('driversSection').style.display = 'none';
+      document.getElementById('vehiclesSection').style.display = '';
+    };
+
+    // Driver Modal
+    const driverModalBg = document.getElementById('driverModalBg');
+    const driverModalForm = document.getElementById('driverModalForm');
+    const driverModalTitle = document.getElementById('driverModalTitle');
+    const driverModalKey = document.getElementById('driverModalKey');
+    const driverModalName = document.getElementById('driverModalName');
+    const driverModalNumber = document.getElementById('driverModalNumber');
+    const driverModalPhoto = document.getElementById('driverModalPhoto');
+    const driverModalPhotoPreview = document.getElementById('driverModalPhotoPreview');
+    document.getElementById('addDriverBtn').onclick = function() {
+      driverModalTitle.textContent = "Add Driver";
+      driverModalForm.reset();
+      driverModalKey.value = "";
+      driverModalPhotoPreview.style.display = "none";
+      driverModalBg.style.display = "block";
+    };
+    document.getElementById('closeDriverModal').onclick = function() {
+      driverModalBg.style.display = "none";
+    };
+    driverModalPhoto.onchange = function() {
+      if (this.files[0]) {
+        driverModalPhotoPreview.src = URL.createObjectURL(this.files[0]);
+        driverModalPhotoPreview.style.display = "block";
+      } else {
+        driverModalPhotoPreview.style.display = "none";
+      }
+    };
+    driverModalForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const name = driverModalName.value.trim();
+      const number = driverModalNumber.value.trim();
+      let photoUrl = driverModalPhotoPreview.src && driverModalPhotoPreview.style.display !== "none" ? driverModalPhotoPreview.src : "";
+      if (!name || !number) return showToast("Please enter both name and number.", false);
+      if (driverModalKey.value) {
+        await set(ref(db, `drivers/${driverModalKey.value}`), { name, number, photoUrl });
+        showToast("Driver updated!");
+      } else {
+        await push(ref(db, "drivers"), { name, number, photoUrl });
+        showToast("Driver added!");
+      }
+      driverModalBg.style.display = "none";
+      loadDrivers();
+    };
+
+    // Vehicle Modal
+    const vehicleModalBg = document.getElementById('vehicleModalBg');
+    const vehicleModalForm = document.getElementById('vehicleModalForm');
+    const vehicleModalTitle = document.getElementById('vehicleModalTitle');
+    const vehicleModalKey = document.getElementById('vehicleModalKey');
+    const vehicleModalModel = document.getElementById('vehicleModalModel');
+    const vehicleModalNumber = document.getElementById('vehicleModalNumber');
+    const vehicleModalPhoto = document.getElementById('vehicleModalPhoto');
+    const vehicleModalPhotoPreview = document.getElementById('vehicleModalPhotoPreview');
+    document.getElementById('addVehicleBtn').onclick = function() {
+      vehicleModalTitle.textContent = "Add Vehicle";
+      vehicleModalForm.reset();
+      vehicleModalKey.value = "";
+      vehicleModalPhotoPreview.style.display = "none";
+      vehicleModalBg.style.display = "block";
+    };
+    document.getElementById('closeVehicleModal').onclick = function() {
+      vehicleModalBg.style.display = "none";
+    };
+    vehicleModalPhoto.onchange = function() {
+      if (this.files[0]) {
+        vehicleModalPhotoPreview.src = URL.createObjectURL(this.files[0]);
+        vehicleModalPhotoPreview.style.display = "block";
+      } else {
+        vehicleModalPhotoPreview.style.display = "none";
+      }
+    };
+    vehicleModalForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const model = vehicleModalModel.value.trim();
+      const number = vehicleModalNumber.value.trim();
+      let photoUrl = vehicleModalPhotoPreview.src && vehicleModalPhotoPreview.style.display !== "none" ? vehicleModalPhotoPreview.src : "";
+      if (!model || !number) return showToast("Please enter both model and number.", false);
+      if (vehicleModalKey.value) {
+        await set(ref(db, `vehicles/${vehicleModalKey.value}`), { model, number, photoUrl });
+        showToast("Vehicle updated!");
+      } else {
+        await push(ref(db, "vehicles"), { model, number, photoUrl });
+        showToast("Vehicle added!");
+      }
+      vehicleModalBg.style.display = "none";
+      loadVehicles();
+    };
+
+    // Driver Table
+    function loadDrivers() {
+      const driverTableBody = document.getElementById("driverTableBody");
+      const driverCount = document.getElementById("driverCount");
+      const search = document.getElementById("driverSearchList").value.toLowerCase();
+      onValue(ref(db, "drivers"), (snapshot) => {
+        driverTableBody.innerHTML = "";
+        let count = 0;
+        snapshot.forEach((child) => {
+          const data = child.val();
+          const key = child.key;
+          if (
+            !search ||
+            data.name.toLowerCase().includes(search) ||
+            data.number.toLowerCase().includes(search)
+          ) {
+            count++;
+            driverTableBody.innerHTML += `
+              <tr>
+                <td class="border border-gray-200">
+                  ${data.photoUrl ? `<img src="${data.photoUrl}" class="profile-img" alt="Driver Photo" />` : `<i class="fas fa-user-circle text-3xl text-gray-400"></i>`}
+                </td>
+                <td class="border border-gray-200">${data.name}</td>
+                <td class="border border-gray-200">${data.number}</td>
+                <td class="border border-gray-200">
+                  <button class="action-btn" onclick="editDriverModal('${key}')"><i class="fas fa-edit"></i></button>
+                  <button class="action-btn" onclick="deleteDriver('${key}')"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+            `;
+          }
+        });
+        driverCount.textContent = count;
+      });
+    }
+    window.editDriverModal = function(key) {
+      const db = getDatabase();
+      onValue(ref(db, `drivers/${key}`), (snapshot) => {
+        const data = snapshot.val();
+        document.getElementById('driverModalTitle').textContent = "Edit Driver";
+        document.getElementById('driverModalKey').value = key;
+        document.getElementById('driverModalName').value = data.name;
+        document.getElementById('driverModalNumber').value = data.number;
+        if (data.photoUrl) {
+          document.getElementById('driverModalPhotoPreview').src = data.photoUrl;
+          document.getElementById('driverModalPhotoPreview').style.display = "block";
+        } else {
+          document.getElementById('driverModalPhotoPreview').style.display = "none";
+        }
+        document.getElementById('driverModalBg').style.display = "block";
+      }, { onlyOnce: true });
+    };
+    window.deleteDriver = function(key) {
+      if (confirm("Delete this driver?")) {
+        remove(ref(db, `drivers/${key}`))
+          .then(() => showToast("Driver deleted!"))
+          .catch(error => alert("Error deleting driver: " + error.message));
+      }
+    };
+
+    // Vehicle Table
+    function loadVehicles() {
+      const vehicleTableBody = document.getElementById("vehicleTableBody");
+      const vehicleCount = document.getElementById("vehicleCount");
+      const search = document.getElementById("vehicleSearchList").value.toLowerCase();
+      onValue(ref(db, "vehicles"), (snapshot) => {
+        vehicleTableBody.innerHTML = "";
+        let count = 0;
+        snapshot.forEach((child) => {
+          const data = child.val();
+          const key = child.key;
+          if (
+            !search ||
+            data.model.toLowerCase().includes(search) ||
+            data.number.toLowerCase().includes(search)
+          ) {
+            count++;
+            vehicleTableBody.innerHTML += `
+              <tr>
+                <td class="border border-gray-200">
+                  ${data.photoUrl ? `<img src="${data.photoUrl}" class="vehicle-img" alt="Vehicle Photo" />` : `<i class="fas fa-car text-3xl text-gray-400"></i>`}
+                </td>
+                <td class="border border-gray-200">${data.model}</td>
+                <td class="border border-gray-200">${data.number}</td>
+                <td class="border border-gray-200">
+                  <button class="action-btn" onclick="editVehicleModal('${key}')"><i class="fas fa-edit"></i></button>
+                  <button class="action-btn" onclick="deleteVehicle('${key}')"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+            `;
+          }
+        });
+        vehicleCount.textContent = count;
+      });
+    }
+    window.editVehicleModal = function(key) {
+      const db = getDatabase();
+      onValue(ref(db, `vehicles/${key}`), (snapshot) => {
+        const data = snapshot.val();
+        document.getElementById('vehicleModalTitle').textContent = "Edit Vehicle";
+        document.getElementById('vehicleModalKey').value = key;
+        document.getElementById('vehicleModalModel').value = data.model;
+        document.getElementById('vehicleModalNumber').value = data.number;
+        if (data.photoUrl) {
+          document.getElementById('vehicleModalPhotoPreview').src = data.photoUrl;
+          document.getElementById('vehicleModalPhotoPreview').style.display = "block";
+        } else {
+          document.getElementById('vehicleModalPhotoPreview').style.display = "none";
+        }
+        document.getElementById('vehicleModalBg').style.display = "block";
+      }, { onlyOnce: true });
+    };
+    window.deleteVehicle = function(key) {
+      if (confirm("Delete this vehicle?")) {
+        remove(ref(db, `vehicles/${key}`))
+          .then(() => showToast("Vehicle deleted!"))
+          .catch(error => alert("Error deleting vehicle: " + error.message));
+      }
+    };
+
+    // Search
+    document.getElementById('driverSearchList').addEventListener('input', loadDrivers);
+    document.getElementById('vehicleSearchList').addEventListener('input', loadVehicles);
+
+    // Export to Excel/PDF
+    document.getElementById('exportExcelDriverList').onclick = function() {
+      const table = document.getElementById('driverTable');
+      const wb = XLSX.utils.table_to_book(table, {sheet:"Drivers"});
+      XLSX.writeFile(wb, 'drivers.xlsx');
+    };
+    document.getElementById('exportPDFDriverList').onclick = function() {
+      const { jsPDF } = window.jspdf;
+      const table = document.getElementById('driverTable');
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a2" });
+      doc.autoTable({
+        html: table,
+        startY: 40,
+        styles: { font: "helvetica", fontSize: 10, cellPadding: 3, halign: 'center', valign: 'middle' },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 10, right: 10 },
+        theme: 'grid',
+        didDrawPage: function (data) {
+          doc.setFontSize(16);
+          doc.setTextColor(40);
+          doc.text("Drivers - NST Travels", data.settings.margin.left + 20, 28, { align: 'left' });
+        }
+      });
+      doc.save('drivers.pdf');
+    };
+    document.getElementById('exportExcelVehicleList').onclick = function() {
+      const table = document.getElementById('vehicleTable');
+      const wb = XLSX.utils.table_to_book(table, {sheet:"Vehicles"});
+      XLSX.writeFile(wb, 'vehicles.xlsx');
+    };
+    document.getElementById('exportPDFVehicleList').onclick = function() {
+      const { jsPDF } = window.jspdf;
+      const table = document.getElementById('vehicleTable');
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a2" });
+      doc.autoTable({
+        html: table,
+        startY: 40,
+        styles: { font: "helvetica", fontSize: 10, cellPadding: 3, halign: 'center', valign: 'middle' },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 10, right: 10 },
+        theme: 'grid',
+        didDrawPage: function (data) {
+          doc.setFontSize(16);
+          doc.setTextColor(40);
+          doc.text("Vehicles - NST Travels", data.settings.margin.left + 20, 28, { align: 'left' });
+        }
+      });
+      doc.save('vehicles.pdf');
+    };
+
+    // Initial load
+    loadDrivers();
+    loadVehicles();
+  </script>
+</body>
+</html>

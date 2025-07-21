@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - NST Travels</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    /* Define base variables for reusability */
+    :root {
+      --transition: all 0.3s ease;
+      --danger-red: #ef4444;
+    }
+
+    /* Default Theme */
+    [data-theme="default"] {
+      --background: #ffffff;
+      --primary: #1000ce    ;
+      --accent: #c2edff;
+      --text: #1f2937;
+      --surface: #f1f5f9;
+      --primary-hover: #0727a1;
+      --accent-hover: #60a5fa;
+    }
+
+    /* Dark Theme */
+    [data-theme="dark"] {
+      --background: #0f172a;
+      --primary: #38bdf8;
+      --accent: #f1f5f9;
+      --text: #e2e8f0;
+      --surface: #1e293b;
+      --primary-hover: #0284c7;
+      --accent-hover: #cbd5e1;
+    }
+
+    /* Modern Theme */
+    [data-theme="modern"] {
+      --background: #f9fafb;
+      --primary: #1e3a8a;
+      --accent: #facc15;
+      --text: #1f2937;
+      --surface: #e5e7eb;
+      --primary-hover: #172554;
+      --accent-hover: #eab308;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--background);
+      min-height: 100vh;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 4rem auto;
+      background: var(--surface);
+      border-radius: 1.5rem;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+      padding: 3rem;
+      position: relative;
+      transform: translateY(0);
+      transition: var(--transition);
+    }
+
+    .container.animate {
+      transform: translateY(15px) scale(1.01);
+    }
+
+    .brand-banner {
+      background: linear-gradient(135deg, var(--primary) 60%, var(--accent) 100%);
+      border-radius: 1.25rem;
+      padding: 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+      color: var(--background);
+      font-size: 1.875rem;
+      font-weight: 700;
+      justify-content: center;
+      transform: perspective(1200px) rotateX(3deg);
+      transition: var(--transition);
+    }
+
+    .brand-banner:hover {
+      transform: perspective(1200px) rotateX(0deg) scale(1.02);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand-logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--background);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .owner-name {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 1.75rem;
+      letter-spacing: 0.5px;
+    }
+
+    .panel-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 2.5rem;
+      transform: translateY(0);
+      transition: var(--transition);
+    }
+
+    .panel-title.animate {
+      transform: translateY(-15px);
+    }
+
+    .section-heading {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .analytics-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.75rem;
+      margin-bottom: 3rem;
+    }
+
+    .analytics-card {
+      background: var(--background);
+      color: var(--text);
+      border-radius: 1rem;
+      padding: 1.75rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.125rem;
+      transition: var(--transition);
+      transform: perspective(1200px) rotateX(4deg);
+      border: 1px solid var(--accent);
+    }
+
+    .analytics-card:hover {
+      transform: perspective(1200px) rotateX(0deg) scale(1.05);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+      border-color: var(--accent-hover);
+    }
+
+    .analytics-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 0.75rem;
+    }
+
+    .main-btns-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.75rem;
+      margin-bottom: 3rem;
+    }
+
+    .panel-btn {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      background: var(--primary);
+      color: var(--background);
+      font-size: 1.125rem;
+      font-weight: 600;
+      border-radius: 0.875rem;
+      padding: 1.5rem;
+      text-decoration: none;
+      transition: var(--transition);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      transform: perspective(1200px) rotateY(4deg);
+    }
+
+    .panel-btn:hover {
+      background: var(--primary-hover);
+      transform: perspective(1200px) rotateY(0deg) scale(1.04);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .panel-btn i {
+      font-size: 1.75rem;
+    }
+
+    .panel-btn .desc {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: var(--accent);
+    }
+
+    .panel-btn:focus {
+      outline: 3px solid var(--accent-hover);
+      outline-offset: 3px;
+    }
+
+    .bottom-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      align-items: center;
+      margin-top: 2.5rem;
+    }
+
+    .small-btn {
+      background: var(--background);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 0.75rem;
+      padding: 0.875rem 1.75rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .small-btn:hover {
+      background: var(--primary);
+      color: var(--background);
+      transform: translateY(-2px);
+    }
+
+    .small-btn.danger {
+      border-color: var(--danger-red);
+      color: var(--danger-red);
+    }
+
+    .small-btn.danger:hover {
+      background: var(--danger-red);
+      color: var(--background);
+    }
+
+    .logout-btn {
+      background: var(--background);
+      color: var(--danger-red);
+      border: 2px solid var(--danger-red);
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 0.75rem;
+      padding: 0.875rem 1.75rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logout-btn:hover {
+      background: var(--danger-red);
+      color: var(--background);
+      transform: translateY(-2px);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%) scale(0.8);
+      z-index: 9999;
+      background: var(--primary);
+      color: var(--background);
+      padding: 1rem 2rem;
+      border-radius: 0.875rem;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      display: none;
+      opacity: 0;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .toast.show {
+      display: block;
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    /* Theme Switcher Styles */
+    .theme-switcher {
+      position: fixed;
+      top: 1.75rem;
+      right: 1.75rem;
+      z-index: 100;
+    }
+
+    .theme-button {
+      background: var(--background);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition);
+    }
+
+    .theme-button:hover {
+      background: var(--primary);
+      color: var(--background);
+      transform: translateY(-2px);
+    }
+
+    .theme-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: var(--surface);
+      border: 2px solid var(--primary);
+      border-radius: 0.75rem;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      display: none;
+      flex-direction: column;
+      min-width: 120px;
+      margin-top: 0.5rem;
+    }
+
+    .theme-dropdown.show {
+      display: flex;
+    }
+
+    .theme-option {
+      padding: 0.75rem 1.5rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .theme-option:hover {
+      background: var(--primary);
+      color: var(--background);
+    }
+
+    .modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-confirm {
+      background: var(--surface);
+      border-radius: 1.25rem;
+      max-width: 420px;
+      margin: 15vh auto;
+      padding: 2.5rem;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      transform: scale(0.8);
+      transition: var(--transition);
+    }
+
+    .modal-bg.show .modal-confirm {
+      transform: scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 1.75rem;
+      top: 1.75rem;
+      font-size: 1.5rem;
+      color: var(--danger-red);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      transform: scale(1.2);
+    }
+
+    #loginBox .container {
+      max-width: 420px;
+      padding: 2.5rem;
+      transform: translateY(0);
+      transition: var(--transition);
+    }
+
+    #loginBox .container.animate {
+      transform: translateY(20px) scale(1.01);
+    }
+
+    #loginForm {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .form-label {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+
+    #loginForm input {
+      width: 100%;
+      padding: 0.875rem 1.25rem;
+      border: 2px solid var(--accent);
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: var(--transition);
+      background: var(--background);
+      color: var(--text);
+    }
+
+    #loginForm input:focus {
+      border-color: var(--accent-hover);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+    }
+
+    #loginForm button {
+      background: var(--primary);
+      color: var(--background);
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.875rem;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    #loginForm button:hover {
+      background: var(--primary-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    footer {
+      background: var(--primary);
+      color: var(--background);
+      padding: 2.5rem;
+      text-align: center;
+      margin-top: 4rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: underline;
+      transition: var(--transition);
+    }
+
+    footer a:hover {
+      color: var(--accent-hover);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: 2.5rem 1.25rem;
+        padding: 2rem;
+      }
+
+      .panel-title {
+        font-size: 2rem;
+      }
+
+      .brand-banner {
+        font-size: 1.5rem;
+        padding: 1.25rem;
+      }
+
+      .analytics-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .main-btns-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .theme-switcher {
+        top: 1.25rem;
+        right: 1.25rem;
+      }
+
+      .theme-button {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.875rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .panel-title {
+        font-size: 1.75rem;
+      }
+
+      .section-heading {
+        font-size: 1.25rem;
+      }
+
+      .panel-btn {
+        font-size: 1rem;
+        padding: 1.25rem;
+      }
+
+      .small-btn, .logout-btn {
+        font-size: 0.875rem;
+        padding: 0.75rem 1.5rem;
+      }
+
+      #loginBox .container {
+        margin: 1.5rem;
+        padding: 2rem;
+      }
+    }
+
+    /* Scroll Animation Trigger */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- Theme Switcher -->
+  <div class="theme-switcher">
+    <button class="theme-button" id="themeButton" aria-label="Change theme">
+      <i class="fas fa-palette"></i> Change Theme
+    </button>
+    <div class="theme-dropdown" id="themeDropdown">
+      <div class="theme-option" data-theme="default">Default</div>
+      <div class="theme-option" data-theme="dark">Dark</div>
+      <div class="theme-option" data-theme="modern">Modern</div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+  <div id="loginBox" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;">
+    <div class="container animate-on-scroll">
+      <div class="brand-banner">
+        <span class="brand-logo"><i class="fas fa-bus-alt" style="color:#0939d1;font-size:2rem;"></i></span>
+        NST Travels Admin
+      </div>
+      <div class="owner-name">Owner Name - N.Sivakumar</div>
+      <form id="loginForm">
+        <label class="form-label">Username</label>
+        <input type="text" id="loginUser" required autocomplete="username" />
+        <label class="form-label">Password</label>
+        <input type="password" id="loginPass" required autocomplete="current-password" />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+  <div id="mainPanel" style="display:none;">
+    <div class="container animate-on-scroll">
+      <div class="brand-banner">
+        <span class="brand-logo"><i class="fas fa-bus-alt" style="color:#0939d1;font-size:2rem;"></i></span>
+        NST Travels Admin
+      </div>
+      <div class="owner-name">Owner Name - N.Sivakumar</div>
+      <div class="panel-title animate-on-scroll">Admin Panel</div>
+      <div class="section-heading animate-on-scroll">Analytics Overview</div>
+      <div class="analytics-cards animate-on-scroll" id="analyticsCards">
+        <div class="analytics-card"><div>Total Trips</div><div class="value" id="totalTrips">-</div></div>
+        <div class="analytics-card"><div>Pending Payments</div><div class="value" id="pendingPayments">-</div></div>
+        <div class="analytics-card"><div>Last Trip ID</div><div class="value" id="lastTripId">-</div></div>
+      </div>
+      <div class="section-heading animate-on-scroll">Main Management Pages</div>
+      <div class="main-btns-grid animate-on-scroll">
+        <a href="index.html" class="panel-btn" aria-label="Trip Entry">
+          <i class="fas fa-road"></i>
+          <span>
+            Trip Entry
+            <span class="desc">Manage all trip entries and bookings</span>
+          </span>
+        </a>
+        <a href="drivers-vehicles.html" class="panel-btn" aria-label="Driver & Vehicle Management">
+          <i class="fas fa-users-cog"></i>
+          <span>
+            Driver & Vehicle Management
+            <span class="desc">Add, edit, assign, and manage drivers/vehicles</span>
+          </span>
+        </a>
+        <a href="Driver-Vehicle-Full-Statistics.html" class="panel-btn" aria-label="Driver & Vehicle Full Statistics">
+          <i class="fas fa-chart-bar"></i>
+          <span>
+            Driver & Vehicle Full Statistics
+            <span class="desc">Analytics and usage statistics</span>
+          </span>
+        </a>
+        <a href="attendence.html" class="panel-btn" aria-label="Attendance">
+          <i class="fas fa-calendar-check"></i>
+          <span>
+            Attendance
+            <span class="desc">Driver/vehicle attendance calendar</span>
+          </span>
+        </a>
+        <a href="revenue.html" class="panel-btn" aria-label="Revenue Dashboard">
+          <i class="fas fa-chart-line"></i>
+          <span>
+            Revenue Dashboard
+            <span class="desc">Revenue, outstanding, and top performers</span>
+          </span>
+        </a>
+        <a href="trip-summary.html" class="panel-btn" aria-label="Trip Summary">
+          <i class="fas fa-list"></i>
+          <span>
+            Trip Summary
+            <span class="desc">All trips, filters, and export</span>
+          </span>
+        </a>
+      </div>
+      <div class="bottom-btns animate-on-scroll">
+        <button id="resetTripIdBtn" class="small-btn" aria-label="Reset Trip ID"><i class="fas fa-sync-alt"></i> Reset Trip ID</button>
+        <button id="resetAllTripsBtn" class="small-btn danger" aria-label="Reset All Trips Data"><i class="fas fa-trash-alt"></i> Reset All Trips Data</button>
+        <button id="logoutBtn" class="logout-btn" aria-label="Logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+    <div id="modalConfirmBg" class="modal-bg">
+      <div class="modal-confirm">
+        <span class="modal-close" id="closeModalConfirm">×</span>
+        <div id="modalConfirmMsg" class="mb-4"></div>
+        <button id="modalConfirmYes" class="small-btn danger mr-2">Yes</button>
+        <button id="modalConfirmNo" class="small-btn">No</button>
+      </div>
+    </div>
+    <footer class="animate-on-scroll">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p>© 2025 NST Travels. All rights reserved. | <a href="mailto:support@nsttravels.com">Support</a></p>
+      </div>
+    </footer>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz2rGDr0iREns6Rp6r1z5EHE3qhLDnEzs",
+      authDomain: "narayananselvitravels-26dcb.firebaseapp.com",
+      databaseURL: "https://narayananselvitravels-26dcb-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "narayananselvitravels-26dcb",
+      storageBucket: "narayananselvitravels-26dcb.appspot.com",
+      messagingSenderId: "395599682835",
+      appId: "1:395599682835:web:9d46e03ca14aa0738dcee6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- Theme Switcher ---
+    // Initialize theme switcher
+    const themeButton = document.getElementById('themeButton');
+    const themeDropdown = document.getElementById('themeDropdown');
+    const themeOptions = document.querySelectorAll('.theme-option');
+    const html = document.documentElement;
+
+    // Toggle dropdown visibility
+    themeButton.addEventListener('click', () => {
+      themeDropdown.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!themeButton.contains(e.target) && !themeDropdown.contains(e.target)) {
+        themeDropdown.classList.remove('show');
+      }
+    });
+
+    // Apply theme and save to Firebase
+    async function applyTheme(theme) {
+      html.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      // Save theme to Firebase (using a static userId for simplicity)
+      const userId = 'admin_siva'; // Static userId since auth is basic
+      try {
+        await set(ref(db, `users/${userId}/theme`), theme);
+      } catch (error) {
+        console.error('Failed to save theme to Firebase:', error);
+      }
+    }
+
+    // Load saved theme from Firebase or localStorage
+    async function loadTheme() {
+      const userId = 'admin_siva';
+      const themeRef = ref(db, `users/${userId}/theme`);
+      try {
+        const snapshot = await get(themeRef);
+        if (snapshot.exists()) {
+          const savedTheme = snapshot.val();
+          html.setAttribute('data-theme', savedTheme);
+          localStorage.setItem('theme', savedTheme);
+        } else {
+          const localTheme = localStorage.getItem('theme') || 'default';
+          html.setAttribute('data-theme', localTheme);
+          await set(themeRef, localTheme);
+        }
+      } catch (error) {
+        console.error('Failed to load theme from Firebase:', error);
+        const localTheme = localStorage.getItem('theme') || 'default';
+        html.setAttribute('data-theme', localTheme);
+      }
+    }
+
+    // Handle theme selection
+    themeOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const selectedTheme = option.getAttribute('data-theme');
+        applyTheme(selectedTheme);
+        themeDropdown.classList.remove('show');
+      });
+    });
+
+    // Load theme on page load
+    loadTheme();
+
+    // --- AUTH ---
+    const loginBox = document.getElementById('loginBox');
+    const mainPanel = document.getElementById('mainPanel');
+    const loginForm = document.getElementById('loginForm');
+    const loginUser = document.getElementById('loginUser');
+    const loginPass = document.getElementById('loginPass');
+    let logoutTimer = null;
+
+    function doLogout() {
+      localStorage.removeItem('nst_admin_auth');
+      mainPanel.style.display = "none";
+      loginBox.style.display = "flex";
+      if (logoutTimer) clearTimeout(logoutTimer);
+    }
+
+    function doLogin() {
+      loginBox.style.display = "none";
+      mainPanel.style.display = "";
+      resetLogoutTimer();
+    }
+
+    function resetLogoutTimer() {
+      if (logoutTimer) clearTimeout(logoutTimer);
+      logoutTimer = setTimeout(() => {
+        showToast("Logged out due to inactivity.", false);
+        doLogout();
+      }, 2 * 60 * 1000); // 2 minutes
+    }
+
+    ['click','mousemove','keydown','touchstart'].forEach(evt =>
+      document.addEventListener(evt, () => {
+        if (mainPanel.style.display !== "none") resetLogoutTimer();
+      })
+    );
+
+    loginForm.onsubmit = function(e) {
+      e.preventDefault();
+      if (loginUser.value === "Siva" && loginPass.value === "Nst@1007") {
+        localStorage.setItem('nst_admin_auth', 'yes');
+        doLogin();
+      } else {
+        showToast("Invalid username or password", false);
+      }
+    };
+
+    document.getElementById('logoutBtn').onclick = function() {
+      doLogout();
+    };
+
+    if (localStorage.getItem('nst_admin_auth') === 'yes') {
+      doLogin();
+    } else {
+      doLogout();
+    }
+
+    // --- Toast ---
+    function showToast(msg, success = true) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.background = success ? 'var(--primary)' : 'var(--danger-red)';
+      toast.classList.add('show');
+      setTimeout(() => { toast.classList.remove('show'); }, 2000);
+    }
+
+    // --- Modal Confirm ---
+    function showModalConfirm(msg, onYes) {
+      document.getElementById('modalConfirmMsg').innerHTML = msg;
+      document.getElementById('modalConfirmBg').classList.add('show');
+      document.getElementById('modalConfirmYes').onclick = () => {
+        document.getElementById('modalConfirmBg').classList.remove('show');
+        onYes();
+      };
+      document.getElementById('modalConfirmNo').onclick = () => {
+        document.getElementById('modalConfirmBg').classList.remove('show');
+      };
+      document.getElementById('closeModalConfirm').onclick = () => {
+        document.getElementById('modalConfirmBg').classList.remove('show');
+      };
+    }
+
+    // --- Reset Trip ID ---
+    document.getElementById('resetTripIdBtn').onclick = async function() {
+      showModalConfirm("Are you sure you want to reset the Trip ID? (Next trip will be NST001)", async () => {
+        await set(ref(db, "tripResetFlag"), true);
+        showToast("Trip ID reset! Next trip will be NST001.");
+      });
+    };
+
+    // --- Reset All Trips Data ---
+    document.getElementById('resetAllTripsBtn').onclick = async function() {
+      showModalConfirm("⚠️ This will DELETE ALL TRIPS DATA. Are you sure?", async () => {
+        await remove(ref(db, "trips"));
+        showToast("All trips data deleted!");
+      });
+    };
+
+    // --- Quick Analytics ---
+    async function loadAnalytics() {
+      const dbRefRoot = ref(db);
+      const [tripsSnap] = await Promise.all([
+        get(child(dbRefRoot, 'trips'))
+      ]);
+      let totalTrips = 0, pendingPayments = 0, lastTripId = "-";
+      if (tripsSnap.exists()) {
+        const trips = Object.values(tripsSnap.val());
+        totalTrips = trips.length;
+        pendingPayments = trips.filter(t => t.paymentStatus && t.paymentStatus !== "Paid").length;
+        let maxNum = 0;
+        trips.forEach(trip => {
+          if (trip.bookingId && trip.bookingId.startsWith("#NST")) {
+            const num = parseInt(trip.bookingId.replace("#NST", ""), 10);
+            if (!isNaN(num) && num > maxNum) maxNum = num;
+          }
+        });
+        lastTripId = maxNum ? `#NST${String(maxNum).padStart(3, '0')}` : "-";
+      }
+      document.getElementById('totalTrips').textContent = totalTrips;
+      document.getElementById('pendingPayments').textContent = pendingPayments;
+      document.getElementById('lastTripId').textContent = lastTripId;
+    }
+    loadAnalytics();
+
+    // --- Scroll Animations ---
+    const animateElements = document.querySelectorAll('.animate-on-scroll');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15 });
+
+    animateElements.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

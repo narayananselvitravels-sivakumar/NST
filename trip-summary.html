@@ -142,12 +142,12 @@
       background: #fff;
       padding: 1.5rem;
       border-radius: 8px;
-      max-width: 600px;
+      max-width: 90vw;
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
     }
-    .modal-content.dark {
+   .Dense modal-content.dark {
       background: #23232a;
       color: #f3f4f6;
     }
@@ -173,6 +173,22 @@
       font-weight: 600;
       margin-bottom: 0.25rem;
       display: block;
+    }
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+    .preview-table th,
+    .preview-table td {
+      border: 1px solid #e5e7eb;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    .preview-table th {
+      background: #2563eb;
+      color: #fff;
+      font-weight: 700;
     }
     @media (max-width: 900px) {
       .container {
@@ -246,6 +262,13 @@
     html.dark .border {
       border-color: #444 !important;
     }
+    html.dark .preview-table th {
+      background: #2563eb;
+      color: #fff;
+    }
+    html.dark .preview-table td {
+      border-color: #444;
+    }
     .footer-text {
       font-size: 1rem;
       font-weight: 600;
@@ -258,12 +281,12 @@
       font-size: 1rem;
       font-weight: 700;
     }
-    .export-btn {
+    .export-btn, .import-btn {
       background: #2563eb;
       color: #fff;
       margin-right: 0.5rem;
     }
-    .export-btn:hover {
+    .export-btn:hover, .import-btn:hover {
       background: #1d4ed8;
     }
     .search-bar {
@@ -305,6 +328,10 @@
       <button id="clearFilters" class="btn bg-gray-300 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-400">Clear</button>
       <button id="exportPDF" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
       <button id="exportExcel" class="btn export-btn px-3 py-2 rounded-md"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+      <label class="btn import-btn px-3 py-2 rounded-md cursor-pointer">
+        <i class="fas fa-file-import mr-1"></i> Import
+        <input type="file" id="importFile" accept=".csv,.xlsx" hidden />
+      </label>
     </div>
     <!-- Table -->
     <div class="responsive-table">
@@ -423,6 +450,23 @@
     </div>
   </div>
 
+  <!-- Import Preview Modal -->
+  <div id="importModal" class="modal">
+    <div class="modal-content">
+      <h2 class="text-xl font-bold mb-4">Preview Imported Data</h2>
+      <div id="previewTableContainer" class="overflow-x-auto">
+        <table class="preview-table">
+          <thead id="previewTableHead"></thead>
+          <tbody id="previewTableBody"></tbody>
+        </table>
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="cancelImport" class="btn bg-gray-300 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+        <button id="saveImport" class="btn bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700">Save to Firebase</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="bg-gray-800 text-white py-6 mt-auto">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -432,7 +476,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, child, get, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, child, get, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCz2rGDr0iREns6Rg6r1z5EHE3qhLDnEzs",
@@ -451,6 +495,7 @@
     let allTrips = [];
     let sortCol = null;
     let sortDir = 1; // 1 = asc, -1 = desc
+    let importedData = [];
 
     // Dark Mode Toggle
     const themeToggle = document.getElementById('themeToggle');
@@ -478,14 +523,14 @@
 
     // Update modal theme
     function updateModalTheme() {
-      const modalContent = document.querySelector('.modal-content');
-      if (modalContent) {
+      const modalContent = document.querySelectorAll('.modal-content');
+      modalContent.forEach(content => {
         if (htmlEl.classList.contains('dark')) {
-          modalContent.classList.add('dark');
+          content.classList.add('dark');
         } else {
-          modalContent.classList.remove('dark');
+          content.classList.remove('dark');
         }
-      }
+      });
     }
 
     // Helper: format date as YYYY-MM-DD for input fields
@@ -637,7 +682,7 @@
         if (match && driver) match = trip.driverName === driver;
         if (match && vehicle) match = trip.vehicleModel === vehicle;
         if (match && payment) match = trip.paymentStatus === payment;
-       if (match && fromDate) match = trip.date >= fromDate;
+        if (match && fromDate) match = trip.date >= fromDate;
         if (match && toDate) match = trip.date <= toDate;
         return match;
       });
@@ -740,20 +785,20 @@
     // Handle edit button click
     function handleEditClick(event) {
       const tripId = event.currentTarget.dataset.id;
-      console.log('Edit button clicked for tripId:', tripId); // Debugging
+      console.log('Edit button clicked for tripId:', tripId);
       openEditModal(tripId);
     }
 
     // Handle delete button click
     function handleDeleteClick(event) {
       const tripId = event.currentTarget.dataset.id;
-      console.log('Delete button clicked for tripId:', tripId); // Debugging
+      console.log('Delete button clicked for tripId:', tripId);
       deleteTrip(tripId);
     }
 
     // Open edit modal
     function openEditModal(tripId) {
-      console.log('Opening edit modal for tripId:', tripId); // Debugging
+      console.log('Opening edit modal for tripId:', tripId);
       const trip = allTrips.find(t => t.id === tripId);
       if (!trip) {
         console.error('Trip not found for id:', tripId);
@@ -806,7 +851,7 @@
     document.getElementById('editForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const tripId = document.getElementById('editTripId').value;
-      console.log('Saving trip for tripId:', tripId); // Debugging
+      console.log('Saving trip for tripId:', tripId);
       const updatedTrip = {
         bookingId: allTrips.find(t => t.id === tripId).bookingId, // Preserve bookingId
         date: document.getElementById('editDate').value || null,
@@ -835,7 +880,7 @@
         balanceAmount: document.getElementById('editBalanceAmount').value || null,
         paymentStatus: document.getElementById('editPaymentStatus').value || null,
         tripNotes: document.getElementById('editTripNotes').value || null,
-        tripFiles: allTrips.find(t => t.id === tripId).tripFiles || [] // Preserve existing files
+        tripFiles: allTrips.find(t => t.id === tripId).tripFiles || []
       };
 
       try {
@@ -853,7 +898,7 @@
 
     // Cancel edit
     document.getElementById('cancelEdit').addEventListener('click', () => {
-      console.log('Cancel edit clicked'); // Debugging
+      console.log('Cancel edit clicked');
       const modal = document.getElementById('editModal');
       modal.style.display = 'none';
       document.getElementById('editForm').reset();
@@ -861,7 +906,7 @@
 
     // Delete trip
     async function deleteTrip(tripId) {
-      console.log('Deleting trip:', tripId); // Debugging
+      console.log('Deleting trip:', tripId);
       if (!confirm('Are you sure you want to delete this trip?')) return;
       try {
         await remove(ref(db, `trips/${tripId}`));
@@ -873,6 +918,171 @@
         alert('Failed to delete trip.');
       }
     }
+
+    // Handle file import
+    document.getElementById('importFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const data = event.target.result;
+          let workbook;
+          if (file.name.endsWith('.csv')) {
+            const csvData = XLSX.utils.sheet_to_json(XLSX.read(data, {type: 'string'}).Sheets[Object.keys(XLSX.read(data, {type: 'string'}).Sheets)[0]], {header: 1});
+            const headers = csvData[0];
+            const rows = csvData.slice(1);
+            workbook = XLSX.utils.json_to_sheet(rows, {header: headers});
+            importedData = XLSX.utils.sheet_to_json(workbook);
+          } else {
+            workbook = XLSX.read(data, {type: 'binary'});
+            importedData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+          }
+          console.log('Imported data:', importedData);
+          showImportPreview(importedData);
+        };
+        if (file.name.endsWith('.csv')) {
+          reader.readAsText(file);
+        } else {
+          reader.readAsBinaryString(file);
+        }
+      } catch (error) {
+        console.error('Error reading file:', error);
+        alert('Failed to read the file.');
+      }
+    });
+
+    // Show import preview modal
+    function showImportPreview(data) {
+      const modal = document.getElementById('importModal');
+      const thead = document.getElementById('previewTableHead');
+      const tbody = document.getElementById('previewTableBody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+      importedData = data;
+
+      // Expected headers mapping to Firebase fields
+      const headerMap = {
+        'Trip ID': 'bookingId',
+        'Trip Date': 'date',
+        'Duty': 'duty',
+        'Reference': 'reference',
+        'Pickup Location': 'pickupLocation',
+        'Drop Location': 'dropLocation',
+        'Customer Name': 'customerName',
+        'Customer Number': 'customerNumber',
+        'Driver Name': 'driverName',
+        'Driver Number': 'driverNumber',
+        'Vehicle Model': 'vehicleModel',
+        'Vehicle Number': 'vehicleNumber',
+        'Start Time': 'startTime',
+        'End Time': 'endTime',
+        'Duration': 'duration',
+        'Extra Hours': 'extraHours',
+        'Start KM': 'startKm',
+        'End KM': 'endKm',
+        'Total KM': 'totalKm',
+        'Extra KM': 'extraKm',
+        'Parking': 'parking',
+        'Toll': 'toll',
+        'Total Amount': 'totalAmount',
+        'Paid Amount': 'paidAmount',
+        'Balance Amount': 'balanceAmount',
+        'Payment Status': 'paymentStatus',
+        'Notes': 'tripNotes'
+      };
+
+      // Create table headers
+      const headers = Object.keys(data[0] || {});
+      const tr = document.createElement('tr');
+      headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        tr.appendChild(th);
+      });
+      thead.appendChild(tr);
+
+      // Create table rows
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        headers.forEach(header => {
+          const td = document.createElement('td');
+          td.textContent = row[header] || '';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      modal.style.display = 'flex';
+      updateModalTheme();
+    }
+
+    // Save imported data to Firebase
+    document.getElementById('saveImport').addEventListener('click', async () => {
+      const headerMap = {
+        'Trip ID': 'bookingId',
+        'Trip Date': 'date',
+        'Duty': 'duty',
+        'Reference': 'reference',
+        'Pickup Location': 'pickupLocation',
+        'Drop Location': 'dropLocation',
+        'Customer Name': 'customerName',
+        'Customer Number': 'customerNumber',
+        'Driver Name': 'driverName',
+        'Driver Number': 'driverNumber',
+        'Vehicle Model': 'vehicleModel',
+        'Vehicle Number': 'vehicleNumber',
+        'Start Time': 'startTime',
+        'End Time': 'endTime',
+        'Duration': 'duration',
+        'Extra Hours': 'extraHours',
+        'Start KM': 'startKm',
+        'End KM': 'endKm',
+        'Total KM': 'totalKm',
+        'Extra KM': 'extraKm',
+        'Parking': 'parking',
+        'Toll': 'toll',
+        'Total Amount': 'totalAmount',
+        'Paid Amount': 'paidAmount',
+        'Balance Amount': 'balanceAmount',
+        'Payment Status': 'paymentStatus',
+        'Notes': 'tripNotes'
+      };
+
+      try {
+        const existingTripIds = new Set(allTrips.map(trip => trip.bookingId));
+        for (const row of importedData) {
+          if (existingTripIds.has(row['Trip ID'])) {
+            console.log(`Skipping duplicate Trip ID: ${row['Trip ID']}`);
+            continue;
+          }
+          const tripData = {};
+          Object.keys(row).forEach(key => {
+            const mappedKey = headerMap[key] || key;
+            tripData[mappedKey] = row[key] || null;
+          });
+          tripData.tripFiles = [];
+          const newTripRef = push(ref(db, 'trips'));
+          await set(newTripRef, tripData);
+          console.log(`Added trip: ${row['Trip ID']}`);
+        }
+        alert('Data imported successfully!');
+        document.getElementById('importModal').style.display = 'none';
+        document.getElementById('importFile').value = '';
+        importedData = [];
+        await loadTrips();
+      } catch (error) {
+        console.error('Error importing data:', error);
+        alert('Failed to import data.');
+      }
+    });
+
+    // Cancel import
+    document.getElementById('cancelImport').addEventListener('click', () => {
+      document.getElementById('importModal').style.display = 'none';
+      document.getElementById('importFile').value = '';
+      importedData = [];
+    });
 
     // Export to PDF
     document.getElementById('exportPDF').addEventListener('click', function() {
@@ -1043,7 +1253,7 @@
 
     // After DOM loaded, make columns resizable and sortable
     window.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM fully loaded'); // Debugging
+      console.log('DOM fully loaded');
       const table = document.getElementById('tripTable');
       makeColumnsResizable(table);
       makeColumnsSortable(table);

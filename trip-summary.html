@@ -555,6 +555,30 @@
       return `${day}-${month}-${year}`;
     }
 
+    // Helper: convert Excel serial date to DD-MM-YYYY
+    function excelSerialToDate(serial) {
+      if (!serial || isNaN(serial)) return '';
+      const utc_days = Math.floor(serial - 25569);
+      const date = new Date(utc_days * 86400 * 1000);
+      if (isNaN(date)) return '';
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    // Helper: convert Excel serial date to YYYY-MM-DD for Firebase
+    function excelSerialToFirebaseDate(serial) {
+      if (!serial || isNaN(serial)) return null;
+      const utc_days = Math.floor(serial - 25569);
+      const date = new Date(utc_days * 86400 * 1000);
+      if (isNaN(date)) return null;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
     // Helper: format time as 12-hour
     function formatTime12(timeStr) {
       if (!timeStr) return '';
@@ -935,8 +959,8 @@
             workbook = XLSX.utils.json_to_sheet(rows, {header: headers});
             importedData = XLSX.utils.sheet_to_json(workbook);
           } else {
-            workbook = XLSX.read(data, {type: 'binary'});
-            importedData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            workbook = XLSX.read(data, {type: 'binary', cellDates: true});
+            importedData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {raw: false, dateNF: 'dd-mm-yyyy'});
           }
           console.log('Imported data:', importedData);
           showImportPreview(importedData);
@@ -1002,12 +1026,16 @@
       });
       thead.appendChild(tr);
 
-      // Create table rows
+      // Create table rows with date conversion for 'Trip Date'
       data.forEach(row => {
         const tr = document.createElement('tr');
         headers.forEach(header => {
           const td = document.createElement('td');
-          td.textContent = row[header] || '';
+          let value = row[header] || '';
+          if (header === 'Trip Date' && typeof value === 'number') {
+            value = excelSerialToDate(value); // Convert Excel serial date to DD-MM-YYYY
+          }
+          td.textContent = value;
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
@@ -1059,7 +1087,11 @@
           const tripData = {};
           Object.keys(row).forEach(key => {
             const mappedKey = headerMap[key] || key;
-            tripData[mappedKey] = row[key] || null;
+            let value = row[key] || null;
+            if (key === 'Trip Date' && typeof value === 'number') {
+              value = excelSerialToFirebaseDate(value); // Convert to YYYY-MM-DD for Firebase
+            }
+            tripData[mappedKey] = value;
           });
           tripData.tripFiles = [];
           const newTripRef = push(ref(db, 'trips'));

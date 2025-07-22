@@ -147,7 +147,7 @@
       max-height: 80vh;
       overflow-y: auto;
     }
-   .Dense modal-content.dark {
+    .modal-content.dark {
       background: #23232a;
       color: #f3f4f6;
     }
@@ -358,8 +358,8 @@
             <th>End KM<div class="resize-handle"></div></th>
             <th>Total KM<div class="resize-handle"></div></th>
             <th>Extra KM<div class="resize-handle"></div></th>
-            <th>Parking<div class="resize-handle"></div></th>
-            <th>Toll<div class="resize-handle"></div></th>
+            <th>Permit<div class="resize-handle"></div></th>
+            <th>Toll & Parking<div class="resize-handle"></div></th>
             <th>Total Amount<div class="resize-handle"></div></th>
             <th>Paid Amount<div class="resize-handle"></div></th>
             <th>Balance Amount<div class="resize-handle"></div></th>
@@ -423,9 +423,9 @@
         <input type="number" id="editTotalKm" name="totalKm" />
         <label for="editExtraKm">Extra KM</label>
         <input type="number" id="editExtraKm" name="extraKm" />
-        <label for="editParking">Parking</label>
+        <label for="editParking">Permit</label>
         <input type="number" id="editParking" name="parking" />
-        <label for="editToll">Toll</label>
+        <label for="editToll">Toll & Parking</label>
         <input type="number" id="editToll" name="toll" />
         <label for="editTotalAmount">Total Amount</label>
         <input type="number" id="editTotalAmount" name="totalAmount" />
@@ -983,8 +983,8 @@
         'End KM': 'endKm',
         'Total KM': 'totalKm',
         'Extra KM': 'extraKm',
-        'Parking': 'parking',
-        'Toll': 'toll',
+        'Permit': 'parking',
+        'Toll & Parking': 'toll',
         'Total Amount': 'totalAmount',
         'Paid Amount': 'paidAmount',
         'Balance Amount': 'balanceAmount',
@@ -1040,8 +1040,8 @@
         'End KM': 'endKm',
         'Total KM': 'totalKm',
         'Extra KM': 'extraKm',
-        'Parking': 'parking',
-        'Toll': 'toll',
+        'Permit': 'parking',
+        'Toll & Parking': 'toll',
         'Total Amount': 'totalAmount',
         'Paid Amount': 'paidAmount',
         'Balance Amount': 'balanceAmount',
@@ -1096,7 +1096,7 @@
         [
           "Trip ID", "Trip Dates", "Duty", "Reference", "Pickup", "Drop", "Customer Name", "Customer Number",
           "Driver Name", "Driver Number", "Vehicle Model", "Vehicle Number", "Start Time", "End Time", "Duration",
-          "Extra Hours", "Start KM", "End KM", "Total KM", "Extra KM", "Parking", "Toll", "Total Amount",
+          "Extra Hours", "Start KM", "End KM", "Total KM", "Extra KM", "Permit", "Toll & Parking", "Total Amount",
           "Paid Amount", "Balance Amount", "Payment Status", "Notes", "Files"
         ]
       ];
